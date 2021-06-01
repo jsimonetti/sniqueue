@@ -5,26 +5,14 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"strconv"
 	"time"
+
+	"github.com/shomali11/util/xstrings"
+
+	"github.com/Lochnair/go-patricia/patricia"
 
 	nfqueue "github.com/florianl/go-nfqueue"
 )
-
-type IPProtocol uint8
-
-const (
-	// IPProtocolIPv4 IPProtocol = 4
-	IPProtocolTCP IPProtocol = 6
-	IPProtocolUDP IPProtocol = 17
-	// IPProtocolIPv6 IPProtocol = 41
-)
-
-type Port uint16
-
-func (a Port) String() string {
-	return strconv.Itoa(int(a))
-}
 
 type PacketInfo struct {
 	Queue           *nfqueue.Nfqueue
@@ -32,16 +20,18 @@ type PacketInfo struct {
 	IPVersion       int
 	IPHeaderLength  int
 	Length          uint16
-	Protocol        IPProtocol
+	Protocol        int
 	Source          net.IP
 	Destination     net.IP
-	SourcePort      Port
-	DestinationPort Port
+	SourcePort      uint16
+	DestinationPort uint16
 	Data            []byte
 	Offset          int
 }
 
 func main() {
+	initDomainList()
+
 	// Send every 3rd packet in a flow with destination port 443 to nfqueue queue 100
 	// # sudo iptables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:3 -j NFQUEUE --queue-num 100 --queue-bypass
 	// # sudo ip6tables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:3 -j NFQUEUE --queue-num 100 --queue-bypass
@@ -104,7 +94,7 @@ func handleIPV4(p *PacketInfo) {
 	p.Source = p.Data[12:16]
 	p.Source = p.Data[12:16]
 	p.Destination = p.Data[16:20]
-	p.Protocol = IPProtocol(p.Data[9])
+	p.Protocol = int(p.Data[9])
 	p.Length = binary.BigEndian.Uint16(p.Data[2:4])
 
 	// This code is added for the following enviroment:
@@ -131,11 +121,11 @@ func handleIPV4(p *PacketInfo) {
 
 	p.Offset = p.IPHeaderLength * 4
 
-	if p.Protocol == IPProtocolTCP {
+	if p.Protocol == 6 {
 		handleTCP(p)
 		return
 	}
-	if p.Protocol == IPProtocolUDP {
+	if p.Protocol == 17 {
 		handleUDP(p)
 		return
 	}
@@ -146,17 +136,17 @@ func handleIPV4(p *PacketInfo) {
 func handleIPV6(p *PacketInfo) {
 	p.Source = p.Data[8:24]
 	p.Destination = p.Data[24:40]
-	p.Protocol = IPProtocol(p.Data[6])
+	p.Protocol = int(p.Data[6])
 	p.Length = binary.BigEndian.Uint16(p.Data[4:6])
 
 	// We need to get the offset to parse the content
 	p.Offset = p.Offset + 40 // Fix THIS?
 
-	if p.Protocol == IPProtocolTCP {
+	if p.Protocol == 6 {
 		handleTCP(p)
 		return
 	}
-	if p.Protocol == IPProtocolUDP {
+	if p.Protocol == 17 {
 		handleUDP(p)
 		return
 	}
@@ -167,8 +157,8 @@ func handleIPV6(p *PacketInfo) {
 func handleTCP(p *PacketInfo) {
 	// add code to skip SYN, SYN/ACK, RST, etc
 
-	p.SourcePort = Port(binary.BigEndian.Uint16(p.Data[p.Offset+0 : p.Offset+2]))
-	p.DestinationPort = Port(binary.BigEndian.Uint16(p.Data[p.Offset+2 : p.Offset+4]))
+	p.SourcePort = binary.BigEndian.Uint16(p.Data[p.Offset+0 : p.Offset+2])
+	p.DestinationPort = binary.BigEndian.Uint16(p.Data[p.Offset+2 : p.Offset+4])
 
 	dataOffset := int(p.Data[p.Offset+12] >> 4)
 
@@ -191,7 +181,6 @@ func handleTCP(p *PacketInfo) {
 		return
 	}
 
-	fmt.Printf("TCP%d non-TLS [%d] %s:%s->%s:%s\t%v\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, p.Data[p.Offset:])
 	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 }
 
@@ -281,13 +270,45 @@ func handleTLS(p *PacketInfo) {
 			extensionOffset += 2
 
 			domainName := string(payload[extensionOffset : extensionOffset+nameLength])
-			fmt.Printf("TLS Domainname (v%d) [%d] %s:%s->%s:%s\t%s\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, domainName)
-			p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+
+			p.Queue.SetVerdict(p.ID, verdict(domainName))
 			return
 		}
 
 		extensionOffset += extensionLen
 	}
-	fmt.Printf("TCP%d no dnsname found [%d] %s:%s->%s:%s\t%#v\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, p.Data[p.Offset:])
 	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+}
+
+func verdict(domainName string) int {
+
+	reversedDomain := xstrings.Reverse(domainName)
+	_, _, found, leftover := domainTrie.FindSubtree(patricia.Prefix(reversedDomain))
+	fmt.Printf("Found: %t, Leftover: %s\n", found, leftover)
+	/*
+	 * Match is true if either the domain matches perfectly in the Trie
+	 * or if the first character of the leftover is a wildcard
+	 */
+	match := found || (len(leftover) > 0 && leftover[0] == 42)
+	if match {
+		fmt.Printf("Verdict on Domainname %s: drop\n", domainName)
+		return nfqueue.NfAccept
+	}
+	fmt.Printf("Verdict on Domainname %s: accept\n", domainName)
+	return nfqueue.NfAccept
+}
+
+var list = []string{
+	"*.google.com",
+	"apple.com",
+}
+
+var domainTrie *patricia.Trie
+
+func initDomainList() {
+	domainTrie = patricia.NewTrie()
+	for _, domain := range list {
+		reversedDomain := xstrings.Reverse(domain)
+		domainTrie.Insert(patricia.Prefix(reversedDomain), 0)
+	}
 }
