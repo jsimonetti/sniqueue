@@ -150,16 +150,14 @@ func handleIPV6(p *PacketInfo) {
 	p.Length = binary.BigEndian.Uint16(p.Data[4:6])
 
 	// We need to get the offset to parse the content
-	p.Offset = 36 // Fix THIS?
+	p.Offset = p.Offset + 40 // Fix THIS?
 
 	if p.Protocol == IPProtocolTCP {
 		handleTCP(p)
-		//fmt.Printf("TCP%d [%d] %s->%s\t%v\n", p.IPVersion, p.ID, p.Source, p.Destination, p.Data[p.Offset:])
 		return
 	}
 	if p.Protocol == IPProtocolUDP {
 		handleUDP(p)
-		//fmt.Printf("UDP%d [%d] %s->%s\t%v\n", p.IPVersion, p.ID, p.Source, p.Destination, p.Data[p.Offset:])
 		return
 	}
 
@@ -167,7 +165,7 @@ func handleIPV6(p *PacketInfo) {
 }
 
 func handleTCP(p *PacketInfo) {
-	// add code to skip SYN, SYN/ACK
+	// add code to skip SYN, SYN/ACK, RST, etc
 
 	p.SourcePort = Port(binary.BigEndian.Uint16(p.Data[p.Offset+0 : p.Offset+2]))
 	p.DestinationPort = Port(binary.BigEndian.Uint16(p.Data[p.Offset+2 : p.Offset+4]))
@@ -282,7 +280,7 @@ func handleTLS(p *PacketInfo) {
 			extensionOffset += 2
 
 			domainName := string(payload[extensionOffset : extensionOffset+nameLength])
-			fmt.Printf("TLS Domainname [%d] %s:%s->%s:%s\t%s\n", p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, domainName)
+			fmt.Printf("TLS Domainname (v%d) [%d] %s:%s->%s:%s\t%s\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, domainName)
 			p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 			return
 		}
