@@ -53,7 +53,7 @@ func main() {
 	}
 	defer nf.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3600*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 86400*time.Second)
 	defer cancel()
 
 	fn := func(a nfqueue.Attribute) int {
@@ -284,23 +284,24 @@ func verdict(domainName string) int {
 
 	reversedDomain := xstrings.Reverse(domainName)
 	_, _, found, leftover := domainTrie.FindSubtree(patricia.Prefix(reversedDomain))
-	fmt.Printf("Found: %t, Leftover: %s\n", found, leftover)
+
 	/*
 	 * Match is true if either the domain matches perfectly in the Trie
 	 * or if the first character of the leftover is a wildcard
 	 */
 	match := found || (len(leftover) > 0 && leftover[0] == 42)
 	if match {
-		fmt.Printf("Verdict on Domainname %s: drop\n", domainName)
-		return nfqueue.NfAccept
+		return nfqueue.NfDrop
 	}
-	fmt.Printf("Verdict on Domainname %s: accept\n", domainName)
 	return nfqueue.NfAccept
 }
 
 var list = []string{
-	"*.google.com",
-	"apple.com",
+	"dns.google",
+	"dns64.dns.google",
+	"dns.google.com",
+	"google-public-dns-a.google.com",
+	"google-public-dns-b.google.com",
 }
 
 var domainTrie *patricia.Trie
