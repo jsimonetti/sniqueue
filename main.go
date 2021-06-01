@@ -264,8 +264,9 @@ func handleTLS(p *PacketInfo) {
 		return
 	}
 
-	for extensionOffset < extensionsLen {
+	for extensionOffset < extensionsLen+offset {
 		extensionId := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
+
 		extensionOffset += 2
 
 		extensionLen := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
@@ -287,6 +288,6 @@ func handleTLS(p *PacketInfo) {
 
 		extensionOffset += extensionLen
 	}
-	fmt.Printf("TCP%d no dnsname found [%d] %s:%s->%s:%s\t%v\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, p.Data[p.Offset:])
+	fmt.Printf("TCP%d no dnsname found [%d] %s:%s->%s:%s\t%#v\n", p.IPVersion, p.ID, p.Source, p.SourcePort, p.Destination, p.DestinationPort, p.Data[p.Offset:])
 	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 }
