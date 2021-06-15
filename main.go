@@ -35,6 +35,7 @@ func main() {
 	// Send every 3rd packet in a flow with destination port 443 to nfqueue queue 100
 	// # sudo iptables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:3 -j NFQUEUE --queue-num 100 --queue-bypass
 	// # sudo ip6tables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:3 -j NFQUEUE --queue-num 100 --queue-bypass
+	// # sudo nft insert rule ip filter FORWARD tcp dport 443 ct original packets 3 counter queue num 100 bypass
 
 	// Set configuration options for nfqueue
 	config := nfqueue.Config{
