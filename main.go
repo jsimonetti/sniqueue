@@ -7,11 +7,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/shomali11/util/xstrings"
-
 	"github.com/Lochnair/go-patricia/patricia"
-
-	nfqueue "github.com/florianl/go-nfqueue"
+	"github.com/florianl/go-nfqueue"
+	"github.com/shomali11/util/xstrings"
 )
 
 type PacketInfo struct {
@@ -26,7 +24,7 @@ type PacketInfo struct {
 	SourcePort      uint16
 	DestinationPort uint16
 	Data            []byte
-	Offset          int
+	Cursor          int
 }
 
 func main() {
@@ -120,7 +118,7 @@ func handleIPV4(p *PacketInfo) {
 		return
 	}
 
-	p.Offset = p.IPHeaderLength * 4
+	p.Cursor = p.IPHeaderLength * 4
 
 	if p.Protocol == 6 {
 		handleTCP(p)
@@ -141,7 +139,7 @@ func handleIPV6(p *PacketInfo) {
 	p.Length = binary.BigEndian.Uint16(p.Data[4:6])
 
 	// We need to get the offset to parse the content
-	p.Offset = p.Offset + 40 // Fix THIS?
+	p.Cursor = p.Cursor + 40 // Fix THIS?
 
 	if p.Protocol == 6 {
 		handleTCP(p)
@@ -158,10 +156,10 @@ func handleIPV6(p *PacketInfo) {
 func handleTCP(p *PacketInfo) {
 	// add code to skip SYN, SYN/ACK, RST, etc
 
-	p.SourcePort = binary.BigEndian.Uint16(p.Data[p.Offset+0 : p.Offset+2])
-	p.DestinationPort = binary.BigEndian.Uint16(p.Data[p.Offset+2 : p.Offset+4])
+	p.SourcePort = binary.BigEndian.Uint16(p.Data[p.Cursor+0 : p.Cursor+2])
+	p.DestinationPort = binary.BigEndian.Uint16(p.Data[p.Cursor+2 : p.Cursor+4])
 
-	dataOffset := int(p.Data[p.Offset+12] >> 4)
+	dataOffset := int(p.Data[p.Cursor+12] >> 4)
 
 	if dataOffset < 5 {
 		// Invalid TCP data offset
@@ -169,15 +167,15 @@ func handleTCP(p *PacketInfo) {
 		return
 	}
 
-	p.Offset = p.Offset + int(dataOffset)*4
-	if p.Offset >= len(p.Data) {
+	p.Cursor = p.Cursor + int(dataOffset)*4
+	if p.Cursor >= len(p.Data) {
 		// TCP data offset greater than packet length
 		p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 		return
 	}
 
 	// Only handle TLS
-	if p.Data[p.Offset] == 0x16 {
+	if p.Data[p.Cursor] == 0x16 {
 		handleTLS(p)
 		return
 	}
@@ -192,9 +190,8 @@ func handleUDP(p *PacketInfo) {
 }
 
 func handleTLS(p *PacketInfo) {
-	payload := p.Data[p.Offset:]
+	payload := p.Data[p.Cursor:]
 
-	handshakeLength := binary.BigEndian.Uint16(payload[3:5]) + 5
 	handshakeProtocol := payload[5]
 
 	// Only attempt to match on client hellos
@@ -203,6 +200,7 @@ func handleTLS(p *PacketInfo) {
 		return
 	}
 
+	handshakeLength := binary.BigEndian.Uint16(payload[3:5]) + 5
 	payloadLength := uint16(len(payload))
 	// If we don't have all the data, try matching with what we have
 	if handshakeLength > payloadLength {
