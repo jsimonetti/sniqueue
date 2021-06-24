@@ -9,6 +9,7 @@ import (
 
 	"github.com/Lochnair/go-patricia/patricia"
 	"github.com/florianl/go-nfqueue"
+	"github.com/google/nftables"
 	"github.com/shomali11/util/xstrings"
 )
 
@@ -28,7 +29,8 @@ type PacketInfo struct {
 }
 
 func main() {
-	initDomainList()
+	initDomainList(list)
+	initNfTables()
 
 	// Send every 3rd packet in a flow with destination port 443 to nfqueue queue 100
 	// # sudo iptables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:3 -j NFQUEUE --queue-num 100 --queue-bypass
@@ -90,7 +92,6 @@ func handle(p *PacketInfo) {
 }
 
 func handleIPV4(p *PacketInfo) {
-	p.Source = p.Data[12:16]
 	p.Source = p.Data[12:16]
 	p.Destination = p.Data[16:20]
 	p.Protocol = int(p.Data[9])
@@ -270,7 +271,13 @@ func handleTLS(p *PacketInfo) {
 
 			domainName := string(payload[extensionOffset : extensionOffset+nameLength])
 
-			p.Queue.SetVerdict(p.ID, verdict(domainName))
+			switch verdict(domainName) {
+			case nfqueue.NfDrop:
+				p.Queue.SetVerdict(p.ID, nfqueue.NfDrop)
+				addblocklist(p.IPVersion, p.Destination)
+			default:
+				p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+			}
 			return
 		}
 
@@ -291,6 +298,7 @@ func verdict(domainName string) int {
 	match := found || (len(leftover) > 0 && leftover[0] == 42)
 	if match {
 		return nfqueue.NfDrop
+		fmt.Printf("dropping %s\n", domainName)
 	}
 	return nfqueue.NfAccept
 }
@@ -305,10 +313,57 @@ var list = []string{
 
 var domainTrie *patricia.Trie
 
-func initDomainList() {
+func initDomainList(list []string) {
 	domainTrie = patricia.NewTrie()
 	for _, domain := range list {
 		reversedDomain := xstrings.Reverse(domain)
 		domainTrie.Insert(patricia.Prefix(reversedDomain), 0)
+	}
+}
+
+func initNfTables() error {
+	conn = &nftables.Conn{}
+	tables, err := conn.ListTables()
+	if err != nil {
+		return err
+	}
+	for _, t := range tables {
+		if t.Name == tableName {
+			table = t
+		}
+	}
+	setv4, err = conn.GetSetByName(table, blocklistV4)
+	if err != nil {
+		return err
+	}
+	setv6, err = conn.GetSetByName(table, blocklistV6)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+const (
+	tableName   string = "filter"
+	blocklistV4 string = "blocklist_v4"
+	blocklistV6 string = "blocklist_v6"
+)
+
+var conn *nftables.Conn
+var setv4 *nftables.Set
+var setv6 *nftables.Set
+var table *nftables.Table
+
+func addblocklist(v int, dst net.IP) {
+	if v == 4 {
+		conn.SetAddElements(setv4, []nftables.SetElement{{
+			Key: dst,
+		}})
+		return
+	}
+	if v == 6 {
+		conn.SetAddElements(setv6, []nftables.SetElement{{
+			Key: dst,
+		}})
 	}
 }
