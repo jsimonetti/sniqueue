@@ -63,7 +63,7 @@ func main() {
 
 	// Set configuration options for nfqueue
 	config := nfqueue.Config{
-		NfQueue:      100,
+		NfQueue:      uint16(queueNumber),
 		MaxPacketLen: 0xFFFF,
 		MaxQueueLen:  0xFF,
 		Copymode:     nfqueue.NfQnlCopyPacket,
@@ -137,10 +137,12 @@ func handle(p *PacketInfo) {
 			logger.Printf("Marked packet with %d", markNumber)
 		}
 		p.Queue.SetVerdictWithMark(p.ID, nfqueue.NfAccept, markNumber)
-	} else {
-		if debug {
-			logger.Print("Accepted packet")
-		}
-		p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+		return
 	}
+
+	if debug {
+		logger.Print("Accepted packet")
+	}
+	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+
 }
