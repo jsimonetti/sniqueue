@@ -30,9 +30,9 @@ var loadList listFlags
 func init() {
 	flag.IntVar(&queueNumber, "queue", 100, "queue number to listen on")
 	flag.IntVar(&markNumber, "mark", 1, "mark matched packets")
-	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets")
+	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets (has precedence over mark)")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
-	flag.Var(&loadList, "list", "list of domains to load")
+	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
 }
 
 var list tree.Tree
