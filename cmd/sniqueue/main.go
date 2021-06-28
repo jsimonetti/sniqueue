@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/jsimonetti/sniqueue/internal/parse"
@@ -21,41 +24,62 @@ type PacketInfo struct {
 var queueNumber int
 var markNumber int
 var dropPackets bool
+var debug bool
 
 func init() {
 	flag.IntVar(&queueNumber, "queue", 100, "queue number to listen on")
-	flag.IntVar(&markNumber, "mark", 123, "mark matched packets")
+	flag.IntVar(&markNumber, "mark", 1, "mark matched packets")
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets")
+	flag.BoolVar(&debug, "debug", false, "additional logging")
 }
+
+var list tree.Tree
+var logger *log.Logger
 
 func main() {
 	flag.Parse()
+	logger = log.Default()
+
+	verdict := "drop"
+	if !dropPackets {
+		verdict = fmt.Sprintf("mark %d", markNumber)
+	}
+	if debug {
+		logger.SetPrefix("[DEBUG] ")
+	}
+	logger.Printf("Starting on queue %d with verdict %s", queueNumber, verdict)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
 
 	list = tree.New()
-	// Send every 3rd packet in a flow with destination port 443 to nfqueue queue 100
-	// # sudo iptables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:20 -j NFQUEUE --queue-num 100 --queue-bypass
-	// # sudo ip6tables -I FORWARD -p tcp --dport 443 -m connbytes --connbytes-mode packets --connbytes-dir original --connbytes 3:20 -j NFQUEUE --queue-num 100 --queue-bypass
-	// # sudo nft insert rule ip filter FORWARD tcp dport 443 ct original packets 3-20 counter queue num 100 bypass
 
 	// Set configuration options for nfqueue
 	config := nfqueue.Config{
-		NfQueue:      uint16(queueNumber),
+		NfQueue:      100,
 		MaxPacketLen: 0xFFFF,
 		MaxQueueLen:  0xFF,
 		Copymode:     nfqueue.NfQnlCopyPacket,
 		ReadTimeout:  10 * time.Millisecond,
 		WriteTimeout: 15 * time.Millisecond,
 	}
+	if debug {
+		config.Logger = logger
+	}
 
 	nf, err := nfqueue.Open(&config)
 	if err != nil {
-		fmt.Println("could not open nfqueue socket:", err)
+		logger.Fatalln("could not open nfqueue socket:", err)
 		return
 	}
 	defer nf.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 86400*time.Second)
-	defer cancel()
 
 	fn := func(a nfqueue.Attribute) int {
 		p := &PacketInfo{
@@ -63,7 +87,18 @@ func main() {
 			ID:      *a.PacketID,
 			Payload: *a.Payload,
 		}
-		go handle(p)
+		if debug {
+			size := ""
+			if a.CapLen != nil {
+				size = fmt.Sprintf(" (len: %d)", *a.CapLen)
+			}
+			mark := ""
+			if a.Mark != nil {
+				size = fmt.Sprintf(" (mark: %d)", *a.Mark)
+			}
+			logger.Printf("received packet%s%s", size, mark)
+		}
+		handle(p)
 		return 0
 	}
 
@@ -74,11 +109,14 @@ func main() {
 		return
 	}
 
-	// Block till the context expires
-	<-ctx.Done()
+	select {
+	case <-c:
+		cancel()
+		logger.Print("receive signal, closing:")
+	case <-ctx.Done():
+		logger.Print("context done, closing")
+	}
 }
-
-var list tree.Tree
 
 func handle(p *PacketInfo) {
 	pkt, err := parse.Parse(p.Payload)
@@ -88,13 +126,21 @@ func handle(p *PacketInfo) {
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
-			fmt.Print("Dropped packet\n")
+			if debug {
+				logger.Print("Dropped packet")
+			}
 			p.Queue.SetVerdict(p.ID, nfqueue.NfDrop)
 			return
 		}
-		fmt.Print("Marked packet\n")
+
+		if debug {
+			logger.Printf("Marked packet with %d", markNumber)
+		}
 		p.Queue.SetVerdictWithMark(p.ID, nfqueue.NfAccept, markNumber)
 	} else {
+		if debug {
+			logger.Print("Accepted packet")
+		}
 		p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 	}
 }

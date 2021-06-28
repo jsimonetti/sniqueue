@@ -42,5 +42,5 @@ func (p *TCP) unmarshal(payload []byte) error {
 		return p.Hello.unmarshal(payload[cursor:])
 	}
 
-	return unmarshalInsufficientError
+	return nil
 }

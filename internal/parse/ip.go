@@ -71,7 +71,7 @@ func (p *IPv4) unmarshal(payload []byte) error {
 		return p.Transport.unmarshal(payload[p.IPHeaderLength*4:])
 	}
 
-	return unmarshalInsufficientError
+	return nil
 }
 
 func (p *IPv6) unmarshal(payload []byte) error {
