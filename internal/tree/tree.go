@@ -7,6 +7,16 @@ import (
 
 type Tree struct {
 	domainTrie *patricia.Trie
+	size       int
+}
+
+func New() Tree {
+	return Tree{
+		domainTrie: patricia.NewTrie(),
+	}
+}
+func (t *Tree) Size() int {
+	return t.size
 }
 
 func (t *Tree) Match(domainName string) bool {
@@ -23,23 +33,11 @@ func (t *Tree) Match(domainName string) bool {
 	return found || (len(leftover) > 0 && leftover[0] == 42)
 }
 
-var list = []string{
-	"dns.google",
-	"dns64.dns.google",
-	"dns.google.com",
-	"google-public-dns-a.google.com",
-	"google-public-dns-b.google.com",
-}
-
-var domainTrie *patricia.Trie
-
-func New() Tree {
-	t := Tree{
-		domainTrie: patricia.NewTrie(),
-	}
+func (t *Tree) Append(list []string) *Tree {
 	for _, domain := range list {
 		reversedDomain := xstrings.Reverse(domain)
 		t.domainTrie.Insert(patricia.Prefix(reversedDomain), 0)
+		t.size++
 	}
 	return t
 }

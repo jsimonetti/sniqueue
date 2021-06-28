@@ -25,12 +25,14 @@ var queueNumber int
 var markNumber int
 var dropPackets bool
 var debug bool
+var loadList listFlags
 
 func init() {
 	flag.IntVar(&queueNumber, "queue", 100, "queue number to listen on")
 	flag.IntVar(&markNumber, "mark", 1, "mark matched packets")
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
+	flag.Var(&loadList, "list", "list of domains to load")
 }
 
 var list tree.Tree
@@ -60,6 +62,11 @@ func main() {
 	}()
 
 	list = tree.New()
+	for _, file := range loadList {
+		logger.Printf("loading domains from %s", file)
+		list.LoadFile(file)
+	}
+	logger.Printf("domain list contains %d entries", list.Size())
 
 	// Set configuration options for nfqueue
 	config := nfqueue.Config{
@@ -105,7 +112,7 @@ func main() {
 	// Register your function to listen on nflqueue queue 100
 	err = nf.Register(ctx, fn)
 	if err != nil {
-		fmt.Println(err)
+		logger.Fatalln(err)
 		return
 	}
 
@@ -145,4 +152,15 @@ func handle(p *PacketInfo) {
 	}
 	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 
+}
+
+type listFlags []string
+
+func (i *listFlags) String() string {
+	return ""
+}
+
+func (i *listFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }
