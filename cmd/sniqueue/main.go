@@ -94,17 +94,6 @@ func main() {
 			ID:      *a.PacketID,
 			Payload: *a.Payload,
 		}
-		if debug {
-			size := ""
-			if a.CapLen != nil {
-				size = fmt.Sprintf(" (len: %d)", *a.CapLen)
-			}
-			mark := ""
-			if a.Mark != nil {
-				size = fmt.Sprintf(" (mark: %d)", *a.Mark)
-			}
-			logger.Printf("received packet%s%s", size, mark)
-		}
 		handle(p)
 		return 0
 	}
@@ -128,27 +117,30 @@ func main() {
 func handle(p *PacketInfo) {
 	pkt, err := parse.Parse(p.Payload)
 	if err != nil {
+		if debug {
+			logger.Print("Parse error %s", err)
+		}
 		p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 	}
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
 			if debug {
-				logger.Print("Dropped packet")
+				logger.Print("Dropped packet (sni: %s)", pkt.DomainName())
 			}
 			p.Queue.SetVerdict(p.ID, nfqueue.NfDrop)
 			return
 		}
 
 		if debug {
-			logger.Printf("Marked packet with %d", markNumber)
+			logger.Printf("Marked packet with %d (sni: %s)", markNumber, pkt.DomainName())
 		}
 		p.Queue.SetVerdictWithMark(p.ID, nfqueue.NfAccept, markNumber)
 		return
 	}
 
 	if debug {
-		logger.Print("Accepted packet")
+		logger.Print("Accepted packet (sni: %s)", pkt.DomainName())
 	}
 	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
 
