@@ -61,7 +61,7 @@ in { config, pkgs, ... }: {
         iifname "${wan}" ct state { established, related } accept
         iifname "${wan}" drop
       }
-     
+
       chain sniqueue {
         type filter hook forward priority -2; policy accept;
         ip daddr @blocklist4 tcp dport 443 reject
@@ -69,8 +69,11 @@ in { config, pkgs, ... }: {
         ip6 daddr @blocklist6 tcp dport 443 reject
         ip6 daddr @blocklist6 udp dport 443 reject
 
-        ct mark 101 accept comment "Skip known good SNI not yet offloaded"
+        ct mark 101 accept comment "Accept known good SNI not yet offloaded"
         ct mark 100 reject comment "Reject known bad SNI"
+        tcp dport 443 ct mark set 102 comment "Mark all unjudged packets"
+        udp dport 443 ct mark set 102 comment "Mark all unjudged packets"
+        meta mark set ct mark
         tcp dport 443 ct original packets <20 queue num 100 bypass
         udp dport 443 ct original packets <20 queue num 100 bypass
       }
@@ -80,12 +83,15 @@ in { config, pkgs, ... }: {
         ip protocol { tcp, udp } meta mark 100 add @blocklist4 { ip daddr }
         ip6 nexthdr { tcp, udp } meta mark 100 add @blocklist6 { ip6 daddr }
         ct mark set meta mark
+        ct mark 102 accept comment "Accept packets without verdict"
         ct mark 100 reject comment "Reject known bad"
-        ct mark 101 flow offload @f
+        ct mark 101 flow offload @f comment "Offload known good SNI"
       }
- 
+
       chain forward {
         type filter hook forward priority 0; policy drop;
+        ct mark != 102 flow offload @f comment "Offload packets not sent to SNIqueue"
+
         iifname "${lan}" oifname "${wan}" accept
         iifname "${wan}" oifname "${lan}" ct state established,related accept
       }
@@ -100,7 +106,7 @@ in { config, pkgs, ... }: {
       chain postrouting {
         type nat hook postrouting priority 0; policy accept;
         oifname "${wan}" masquerade
-      } 
+      }
     }
   '';
 }
