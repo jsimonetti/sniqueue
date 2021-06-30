@@ -140,6 +140,7 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	}
 	if dropPackets {
 		_ = queue.SetVerdict(id, nfqueue.NfAccept)
+		return
 	}
 	_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markGoodNumber)
 }
