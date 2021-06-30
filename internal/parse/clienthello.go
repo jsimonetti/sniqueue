@@ -6,6 +6,8 @@ import (
 )
 
 var unmarshalClientHelloError = errors.New("insufficient bytes to unmarshal clienthello")
+var UnmarshalNoTLSHandshakeError = errors.New("no TLS handshake found")
+var UnmarshalNoTLSError = errors.New("no TLS found")
 
 type clientHello struct {
 	SNI string
@@ -19,7 +21,7 @@ func (c *clientHello) unmarshal(payload []byte) error {
 
 	// Only attempt to match on client hellos
 	if handshakeProtocol != 0x01 {
-		return nil
+		return UnmarshalNoTLSHandshakeError
 	}
 
 	handshakeLength := binary.BigEndian.Uint16(payload[3:5]) + 5

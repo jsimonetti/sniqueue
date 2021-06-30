@@ -60,10 +60,13 @@ in pkgs.nixosTest ({
     # Test NAT
     client.succeed("ping -c 1 ${server_ip} >&2")
 
+    # Test no SNI is not blocked
+    client.succeed("curl --connect-timeout 2 --fail -k https://${server_ip}/ >&2")
+
     # Test SNIqueue blocks dns.google
     #print(router.succeed("systemctl status -l sniqueue.service"))
     router.wait_for_unit("sniqueue.service")
-    client.fail("curl --connect-timeout 1 --retry 0 --fail -k --resolve dns.google:443:192.168.8.2 https://dns.google/ >&2")
+    client.fail("curl --connect-timeout 1 --fail -k --resolve dns.google:443:192.168.8.2 https://dns.google/ >&2")
     #router.succeed("nft list set inet filter blocklist4 >&2")
 
     # Test destination is added to blocklist
@@ -73,5 +76,6 @@ in pkgs.nixosTest ({
     # Test destination is remove from blocklist
     client.sleep(8)
     client.succeed("curl --connect-timeout 2 --fail -k https://${server_ip}/ >&2")
+    router.succeed("conntrack -L >&2")
   '';
 })

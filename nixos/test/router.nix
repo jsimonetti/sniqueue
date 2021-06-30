@@ -5,6 +5,7 @@ let
   router_lanip = "10.10.1.1";
 
   sniqueue = ./sniqueue;
+  list = ./mylist.sample;
 in { config, pkgs, ... }: {
   boot.kernel.sysctl = { "net.ipv4.conf.all.forwarding" = true; };
 
@@ -12,11 +13,11 @@ in { config, pkgs, ... }: {
     wantedBy = [ "multi-user.target" ]; 
     after = [ "network.target" ];
     script = ''
-      ${sniqueue} -queue 100 -mark 100 -debug
+      ${sniqueue} -queue 100 -mark 100 -debug -list ${list}
     '';
   };
 
-  environment.systemPackages = [ pkgs.tshark pkgs.screen ];
+  environment.systemPackages = [ pkgs.conntrack-tools ];
 
   networking.interfaces.${wan} = {
     useDHCP = false;
@@ -36,6 +37,10 @@ in { config, pkgs, ... }: {
   networking.nftables.enable = true;
   networking.nftables.ruleset = ''
     table inet filter {
+      flowtable f {
+        hook ingress priority 0; devices = { ${wan}, ${lan} };
+      }
+
       set blocklist4 {
         type ipv4_addr
         timeout 10s
@@ -57,25 +62,26 @@ in { config, pkgs, ... }: {
         iifname "${wan}" drop
       }
      
-      chain blocklist {
+      chain sniqueue {
         type filter hook forward priority -2; policy accept;
         ip daddr @blocklist4 tcp dport 443 reject
         ip daddr @blocklist4 udp dport 443 reject
         ip6 daddr @blocklist6 tcp dport 443 reject
         ip6 daddr @blocklist6 udp dport 443 reject
-      }
 
-      chain sniqueue {
-        type filter hook forward priority -1; policy accept;
-        tcp dport 443 ct original packets 3-20 queue num 100 bypass
-        udp dport 443 ct original packets 3-20 queue num 100 bypass
+        ct mark 101 accept comment "Skip known good SNI not yet offloaded"
+        ct mark 100 reject comment "Reject known bad SNI"
+        tcp dport 443 ct original packets <20 queue num 100 bypass
+        udp dport 443 ct original packets <20 queue num 100 bypass
       }
 
       chain sniqueue_block {
-        type filter hook forward priority 255; policy accept;
+        type filter hook forward priority -1; policy accept;
         ip protocol { tcp, udp } meta mark 100 add @blocklist4 { ip daddr }
         ip6 nexthdr { tcp, udp } meta mark 100 add @blocklist6 { ip6 daddr }
-        meta mark 100 reject
+        ct mark set meta mark
+        ct mark 100 reject comment "Reject known bad"
+        ct mark 101 flow offload @f
       }
  
       chain forward {

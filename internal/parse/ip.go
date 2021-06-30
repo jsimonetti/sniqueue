@@ -74,8 +74,7 @@ func (p *IPv4) unmarshal(payload []byte) error {
 		p.Transport = &UDP{}
 		return p.Transport.unmarshal(payload[p.IPHeaderLength*4:])
 	}
-
-	return nil
+	return unmarshalNonIPError
 }
 
 func (p *IPv6) unmarshal(payload []byte) error {
@@ -90,9 +89,11 @@ func (p *IPv6) unmarshal(payload []byte) error {
 	var t transportLayer
 	switch p.Protocol {
 	case 6:
-		t = &TCP{}
+		p.Transport = &TCP{}
+		return p.Transport.unmarshal(payload[40:])
 	case 17:
-		t = &UDP{}
+		p.Transport = &UDP{}
+		return p.Transport.unmarshal(payload[40:])
 	}
 
 	return t.unmarshal(payload[40:])

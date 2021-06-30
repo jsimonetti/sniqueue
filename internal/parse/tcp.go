@@ -34,7 +34,7 @@ func (p *TCP) unmarshal(payload []byte) error {
 
 	cursor := int(dataOffset) * 4
 	if cursor == len(payload) { // no data in packet
-		return nil
+		return UnmarshalNoTLSError
 	}
 	if cursor > len(payload) {
 		// TCP data offset greater than packet length
@@ -45,5 +45,5 @@ func (p *TCP) unmarshal(payload []byte) error {
 	if payload[cursor] == 0x16 {
 		return p.Hello.unmarshal(payload[cursor:])
 	}
-	return nil
+	return UnmarshalNoTLSError
 }

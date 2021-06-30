@@ -16,14 +16,15 @@ import (
 )
 
 var queueNumber int
-var markNumber int
+var markBadNumber int
+var markGoodNumber int
 var dropPackets bool
 var debug bool
 var loadList listFlags
 
 func init() {
 	flag.IntVar(&queueNumber, "queue", 100, "queue number to listen on")
-	flag.IntVar(&markNumber, "mark", 1, "mark matched packets")
+	flag.IntVar(&markBadNumber, "mark", 1, "mark matched packets")
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets (has precedence over mark)")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
 	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
@@ -34,6 +35,8 @@ var logger *log.Logger
 
 func main() {
 	flag.Parse()
+	markGoodNumber = markBadNumber + 1
+
 	logger = log.Default()
 	if debug {
 		logger.SetPrefix("[DEBUG] ")
@@ -41,7 +44,7 @@ func main() {
 
 	verdict := "drop"
 	if !dropPackets {
-		verdict = fmt.Sprintf("mark %d", markNumber)
+		verdict = fmt.Sprintf("mark %d (known bad) %d (known good)", markBadNumber, markGoodNumber)
 	}
 	logger.Printf("Starting on queue %d with verdict '%s'", queueNumber, verdict)
 
@@ -108,11 +111,12 @@ func main() {
 func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	pkt, err := parse.Parse(payload)
 	if err != nil {
-		if debug {
+		if debug && err != parse.UnmarshalNoTLSError && err != parse.UnmarshalNoTLSHandshakeError {
 			logger.Printf("Parse error: %s", err)
 			logger.Printf("Packet payload: %#v", payload)
 		}
 		_ = queue.SetVerdict(id, nfqueue.NfAccept)
+		return
 	}
 
 	if list.Match(pkt.DomainName()) {
@@ -125,16 +129,19 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 		}
 
 		if debug {
-			logger.Printf("Marked packet with %d (sni: '%s')", markNumber, pkt.DomainName())
+			logger.Printf("Marked packet with %d (sni: '%s')", markBadNumber, pkt.DomainName())
 		}
-		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markNumber)
+		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markBadNumber)
 		return
 	}
 
 	if debug {
 		logger.Printf("Accepted packet (sni: '%s')", pkt.DomainName())
 	}
-	_ = queue.SetVerdict(id, nfqueue.NfAccept)
+	if dropPackets {
+		_ = queue.SetVerdict(id, nfqueue.NfAccept)
+	}
+	_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markGoodNumber)
 }
 
 type listFlags []string
