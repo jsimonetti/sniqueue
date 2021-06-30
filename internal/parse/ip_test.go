@@ -23,7 +23,7 @@ func Test_parse(t *testing.T) {
 		{
 			name: "IPv4 packet",
 			want: &IPv4{
-				IP: IP{
+				Inet: Inet{
 					IPVersion:      4,
 					IPHeaderLength: 5,
 					Length:         281,

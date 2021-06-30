@@ -6,16 +6,20 @@ import (
 	"net"
 )
 
+var unmarshalIPError = errors.New("insufficient bytes to unmarshal IP")
+var unmarshalIP4Error = errors.New("insufficient bytes to unmarshal IP4")
+var unmarshalIP6Error = errors.New("insufficient bytes to unmarshal IP6")
+var unmarshalNonIPError = errors.New("cannot parse non-IP")
+
 type IPv4 struct {
-	IP
+	Inet
 }
 
 type IPv6 struct {
-	IP
+	Inet
 }
 
-type IP struct {
-	Cursor         int
+type Inet struct {
 	IPVersion      int
 	IPHeaderLength int
 	Length         uint16
@@ -25,7 +29,7 @@ type IP struct {
 	Transport      transportLayer
 }
 
-func (p *IP) DomainName() string {
+func (p *Inet) DomainName() string {
 	if p.Transport != nil {
 		return p.Transport.domainName()
 	}
@@ -53,13 +57,13 @@ func (p *IPv4) unmarshal(payload []byte) error {
 
 	if p.Length < 20 {
 		// Invalid (too small) IP length
-		return unmarshalInsufficientError
+		return unmarshalIP4Error
 	} else if p.IPHeaderLength < 5 {
 		// Invalid (too small) IP header length
-		return unmarshalInsufficientError
+		return unmarshalIP4Error
 	} else if int(p.IPHeaderLength*4) > int(p.Length) {
 		// Invalid IP header length > IP length
-		return unmarshalInsufficientError
+		return unmarshalIP4Error
 	}
 
 	switch p.Protocol {
@@ -76,7 +80,7 @@ func (p *IPv4) unmarshal(payload []byte) error {
 
 func (p *IPv6) unmarshal(payload []byte) error {
 	if len(payload) < 40 {
-		return unmarshalInsufficientError
+		return unmarshalIP6Error
 	}
 	p.Source = payload[8:24]
 	p.Destination = payload[24:40]
@@ -99,11 +103,9 @@ type networkLayer interface {
 	DomainName() string
 }
 
-var networkUnmarshalError = errors.New("could not unmarshal as IP")
-
 func Parse(payload []byte) (networkLayer, error) {
 	if len(payload) < 1 {
-		return nil, unmarshalInsufficientError
+		return nil, unmarshalIPError
 	}
 
 	version := int(payload[0]) >> 4
@@ -113,7 +115,7 @@ func Parse(payload []byte) (networkLayer, error) {
 	switch version {
 	case 4: // IPv4
 		p = &IPv4{
-			IP{
+			Inet{
 				IPVersion:      4,
 				IPHeaderLength: headerLength,
 			},
@@ -121,12 +123,12 @@ func Parse(payload []byte) (networkLayer, error) {
 		return p, p.unmarshal(payload)
 	case 6: // IPv6
 		p = &IPv6{
-			IP{
+			Inet{
 				IPVersion:      6,
 				IPHeaderLength: headerLength,
 			},
 		}
 		return p, p.unmarshal(payload)
 	}
-	return nil, unmarshalInsufficientError
+	return nil, unmarshalNonIPError
 }

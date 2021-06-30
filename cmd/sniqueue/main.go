@@ -15,12 +15,6 @@ import (
 	"github.com/florianl/go-nfqueue"
 )
 
-type PacketInfo struct {
-	Queue   *nfqueue.Nfqueue
-	ID      uint32
-	Payload []byte
-}
-
 var queueNumber int
 var markNumber int
 var dropPackets bool
@@ -41,15 +35,15 @@ var logger *log.Logger
 func main() {
 	flag.Parse()
 	logger = log.Default()
+	if debug {
+		logger.SetPrefix("[DEBUG] ")
+	}
 
 	verdict := "drop"
 	if !dropPackets {
 		verdict = fmt.Sprintf("mark %d", markNumber)
 	}
-	if debug {
-		logger.SetPrefix("[DEBUG] ")
-	}
-	logger.Printf("Starting on queue %d with verdict %s", queueNumber, verdict)
+	logger.Printf("Starting on queue %d with verdict '%s'", queueNumber, verdict)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -63,8 +57,10 @@ func main() {
 
 	list = tree.New()
 	for _, file := range loadList {
-		logger.Printf("loading domains from %s", file)
-		list.LoadFile(file)
+		logger.Printf("loading domains from '%s'", file)
+		if err := list.LoadFile(file); err != nil {
+			logger.Fatalf("error loading file '%s': %s", file, err)
+		}
 	}
 	logger.Printf("domain list contains %d entries", list.Size())
 
@@ -89,16 +85,11 @@ func main() {
 	defer nf.Close()
 
 	fn := func(a nfqueue.Attribute) int {
-		p := &PacketInfo{
-			Queue:   nf,
-			ID:      *a.PacketID,
-			Payload: *a.Payload,
-		}
-		handle(p)
+		handle(nf, *a.Payload, *a.PacketID)
 		return 0
 	}
 
-	// Register your function to listen on nflqueue queue 100
+	// Register function to listen on nflqueue queue 100
 	err = nf.Register(ctx, fn)
 	if err != nil {
 		logger.Fatalln(err)
@@ -114,36 +105,36 @@ func main() {
 	}
 }
 
-func handle(p *PacketInfo) {
-	pkt, err := parse.Parse(p.Payload)
+func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
+	pkt, err := parse.Parse(payload)
 	if err != nil {
 		if debug {
-			logger.Print("Parse error %s", err)
+			logger.Printf("Parse error: %s", err)
+			logger.Printf("Packet payload: %#v", payload)
 		}
-		p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
+		_ = queue.SetVerdict(id, nfqueue.NfAccept)
 	}
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
 			if debug {
-				logger.Print("Dropped packet (sni: %s)", pkt.DomainName())
+				logger.Printf("Dropped packet (sni: '%s')", pkt.DomainName())
 			}
-			p.Queue.SetVerdict(p.ID, nfqueue.NfDrop)
+			_ = queue.SetVerdict(id, nfqueue.NfDrop)
 			return
 		}
 
 		if debug {
-			logger.Printf("Marked packet with %d (sni: %s)", markNumber, pkt.DomainName())
+			logger.Printf("Marked packet with %d (sni: '%s')", markNumber, pkt.DomainName())
 		}
-		p.Queue.SetVerdictWithMark(p.ID, nfqueue.NfAccept, markNumber)
+		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markNumber)
 		return
 	}
 
 	if debug {
-		logger.Print("Accepted packet (sni: %s)", pkt.DomainName())
+		logger.Printf("Accepted packet (sni: '%s')", pkt.DomainName())
 	}
-	p.Queue.SetVerdict(p.ID, nfqueue.NfAccept)
-
+	_ = queue.SetVerdict(id, nfqueue.NfAccept)
 }
 
 type listFlags []string
