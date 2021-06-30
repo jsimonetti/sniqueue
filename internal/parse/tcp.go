@@ -33,7 +33,10 @@ func (p *TCP) unmarshal(payload []byte) error {
 	}
 
 	cursor := int(dataOffset) * 4
-	if cursor >= len(payload) {
+	if cursor == len(payload) { // no data in packet
+		return nil
+	}
+	if cursor > len(payload) {
 		// TCP data offset greater than packet length
 		return unmarshalTCPError
 	}
