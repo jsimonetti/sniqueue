@@ -66,8 +66,8 @@ in pkgs.nixosTest ({
     # Test SNIqueue blocks dns.google
     #print(router.succeed("systemctl status -l sniqueue.service"))
     router.wait_for_unit("sniqueue.service")
-    client.fail("curl --connect-timeout 1 --fail -k --resolve dns.google:443:192.168.8.2 https://dns.google/ >&2")
-    #router.succeed("nft list set inet filter blocklist4 >&2")
+    client.fail("curl --connect-timeout 1 --fail -k --resolve dns.google:443:${server_ip} https://dns.google/ >&2")
+    router.succeed("nft list set inet filter blocklist4 >&2")
 
     # Test destination is added to blocklist
     client.sleep(2)
