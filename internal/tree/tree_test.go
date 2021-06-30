@@ -5,46 +5,45 @@ import (
 )
 
 func TestTree_Match(t *testing.T) {
-	tree := testTree(t)
 	tests := []struct {
 		name  string
-		tree  Tree
+		tree  *Tree
 		sni   string
 		found bool
 	}{
 		{
 			name:  "Not in list",
-			tree:  tree,
+			tree:  testTree(t),
 			sni:   "www.startpage.com",
 			found: false,
 		},
 		{
 			name:  "Not in list empty",
-			tree:  tree,
+			tree:  testTree(t),
 			sni:   "",
 			found: false,
 		},
 		{
 			name:  "Exact in list",
-			tree:  tree,
+			tree:  testTree(t),
 			sni:   "dns.google",
 			found: true,
 		},
 		{
 			name:  "Wildcard in list",
-			tree:  tree,
+			tree:  testTree(t),
 			sni:   "google.com",
 			found: true,
 		},
 		{
 			name:  "Exact in list after append",
-			tree:  *tree.Append([]string{"github.com"}),
+			tree:  testTree(t).Append([]string{"github.com"}),
 			sni:   "github.com",
 			found: true,
 		},
 		{
 			name:  "Wildcard in list after append",
-			tree:  *tree.Append([]string{"*.github.com"}),
+			tree:  testTree(t).Append([]string{"*.github.com"}),
 			sni:   "raw.github.com",
 			found: true,
 		},
@@ -58,11 +57,11 @@ func TestTree_Match(t *testing.T) {
 	}
 }
 
-func testTree(t *testing.T) Tree {
+func testTree(t *testing.T) *Tree {
 	t.Helper()
 	tree := New()
 	tree.Append(list)
-	return tree
+	return &tree
 }
 
 var list = []string{
