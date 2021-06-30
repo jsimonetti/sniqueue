@@ -111,9 +111,11 @@ func main() {
 func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	pkt, err := parse.Parse(payload)
 	if err != nil {
-		if debug && err != parse.UnmarshalNoTLSError && err != parse.UnmarshalNoTLSHandshakeError {
+		if debug {
 			logger.Printf("Parse error: %s", err)
-			logger.Printf("Packet payload: %#v", payload)
+			if err != parse.UnmarshalNoTLSError && err != parse.UnmarshalNoTLSHandshakeError {
+				logger.Printf("Packet payload: %#v", payload)
+			}
 		}
 		_ = queue.SetVerdict(id, nfqueue.NfAccept)
 		return

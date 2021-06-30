@@ -6,8 +6,8 @@ import (
 )
 
 var unmarshalClientHelloError = errors.New("insufficient bytes to unmarshal clienthello")
-var UnmarshalNoTLSHandshakeError = errors.New("no TLS handshake found")
-var UnmarshalNoTLSError = errors.New("no TLS found")
+var UnmarshalNoTLSHandshakeError = errors.New("TLS handshake not found")
+var UnmarshalNoTLSError = errors.New("not a TLS packet")
 
 type clientHello struct {
 	SNI string
