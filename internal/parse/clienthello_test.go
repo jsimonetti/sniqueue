@@ -42,9 +42,10 @@ func Test_clientHello_unmarshal(t *testing.T) {
 			got := &clientHello{}
 
 			if err := got.unmarshal(tt.payload); err != nil {
-				if !tt.wantErr {
-					t.Errorf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+				if tt.wantErr {
+					return
 				}
+				t.Fatalf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return

@@ -47,11 +47,11 @@ func TestTCP_unmarshal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := &TCP{}
-
 			if err := got.unmarshal(tt.payload); err != nil {
-				if !tt.wantErr {
-					t.Errorf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+				if tt.wantErr {
+					return
 				}
+				t.Fatalf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return

@@ -18,6 +18,18 @@ func TestUDP_unmarshal(t *testing.T) {
 			payload: []byte{},
 			wantErr: true,
 		},
+		{
+			name:    "IETF QUIC",
+			payload: goodUDPQUICInitial,
+			wantErr: false,
+			want: &UDP{
+				SourcePort:      52832,
+				DestinationPort: 443,
+				Hello: clientHello{
+					SNI: "r2---sn-fxc25nn-nwje.googlevideo.com",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -26,7 +38,7 @@ func TestUDP_unmarshal(t *testing.T) {
 				if tt.wantErr {
 					return
 				}
-				t.Errorf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if diff := cmp.Diff(tt.want, got); diff != "" {

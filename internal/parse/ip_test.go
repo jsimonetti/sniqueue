@@ -40,13 +40,36 @@ func Test_parse(t *testing.T) {
 			payload: goodIPv4,
 			wantErr: false,
 		},
+		{
+			name: "IPv6 QUIC",
+			want: &IPv6{
+				Inet: Inet{
+					IPVersion:      6,
+					IPHeaderLength: 0,
+					Length:         1338,
+					Protocol:       17,
+					Source:         net.ParseIP("2a02:a45c:19f4:10:8c72:518d:fc5b:d3d3"),
+					Destination:    net.ParseIP("2604:5500:3:d::d"),
+					Transport: &UDP{
+						SourcePort:      52832,
+						DestinationPort: 443,
+						Hello:           clientHello{SNI: "r2---sn-fxc25nn-nwje.googlevideo.com"},
+					},
+				},
+			},
+			payload: goodIPv6QUICInitial,
+			wantErr: true, // to skip quic for now
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got networkLayer
 			var err error
-			if got, err = Parse(tt.payload); (err != nil) != tt.wantErr {
-				t.Errorf("parse() error = %v, wantErr %v", err, tt.wantErr)
+			if got, err = Parse(tt.payload); err != nil {
+				if tt.wantErr {
+					return
+				}
+				t.Fatalf("parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return
