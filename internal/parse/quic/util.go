@@ -5,11 +5,9 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"errors"
-	"io"
-	"math"
-
 	"github.com/marten-seemann/qtls-go1-16"
 	"golang.org/x/crypto/hkdf"
+	"io"
 )
 
 var UnmarshalQUICError = errors.New("insufficient bytes to unmarshal QUIC")
@@ -66,9 +64,6 @@ func getSalt(v uint32) []byte {
 
 // The version numbers, making grepping easier
 const (
-	VersionTLS      uint32 = 0x1
-	VersionWhatever uint32 = math.MaxUint32 - 1 // for when the version doesn't matter
-	VersionUnknown  uint32 = math.MaxUint32
 	VersionDraft29  uint32 = 0xff00001d
 	VersionDraft32  uint32 = 0xff000020
 	VersionDraft34  uint32 = 0xff000022
