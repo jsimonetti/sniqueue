@@ -200,7 +200,7 @@ func TestQuic_unmarshal(t *testing.T) {
 					PacketNumberLen: 1,
 					PacketNumber:    1,
 				},
-				Hello: tls.QuickHelloMsg{SNI: "r2---sn-fxc25nn-nwje.googlevideo.com"},
+				Hello: tls.ClientHello{SNI: "r2---sn-fxc25nn-nwje.googlevideo.com"},
 			},
 			wantErr: false,
 		},

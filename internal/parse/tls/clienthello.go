@@ -8,47 +8,43 @@ type ClientHello struct {
 	SNI string
 }
 
-func (c *ClientHello) Unmarshal(payload []byte) error {
-	if len(payload) < 5 {
+func (m *ClientHello) Unmarshal(payload []byte) error {
+
+	payloadLength := uint16(len(payload))
+	if payloadLength < uint16(4) {
 		return UnmarshalClientHelloError
 	}
-	handshakeProtocol := payload[5]
 
+	handshakeProtocol := payload[4]
 	// Only attempt to match on client hellos
 	if handshakeProtocol != 0x01 {
 		return UnmarshalNoTLSHandshakeError
 	}
 
-	handshakeLength := binary.BigEndian.Uint16(payload[3:5]) + 5
-	payloadLength := uint16(len(payload))
-	// If we don't have all the data, try matching with what we have
-	if handshakeLength > payloadLength {
-		handshakeLength = payloadLength
-	}
-
-	offset, baseOffset, extensionOffset := uint16(0), uint16(43), uint16(2)
+	offset, baseOffset, extensionOffset := uint16(0), uint16(42), uint16(2)
 	if baseOffset+2 > uint16(len(payload)) {
 		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the session ID
 	sessionIdLength := uint16(payload[baseOffset])
-	if (sessionIdLength + baseOffset + 2) > handshakeLength {
+	if (sessionIdLength + baseOffset + 2) > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the ciphers
 	cipherLenStart := baseOffset + sessionIdLength + 1
-	cipherLen := binary.BigEndian.Uint16(payload[cipherLenStart : cipherLenStart+2])
+	cipherLen := uint16(payload[cipherLenStart])<<8 | uint16(payload[cipherLenStart+1])
+
 	offset = baseOffset + sessionIdLength + cipherLen + 2
-	if offset > handshakeLength {
+	if offset > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the compression methods list
 	compressionLen := uint16(payload[offset+1])
 	offset += compressionLen + 2
-	if offset > handshakeLength {
+	if offset > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
@@ -58,7 +54,7 @@ func (c *ClientHello) Unmarshal(payload []byte) error {
 	// Add the full offset to were the extensions start
 	extensionOffset += offset
 
-	if extensionsLen > handshakeLength {
+	if extensionsLen > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
@@ -77,7 +73,7 @@ func (c *ClientHello) Unmarshal(payload []byte) error {
 			nameLength := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
 			extensionOffset += 2
 
-			c.SNI = string(payload[extensionOffset : extensionOffset+nameLength])
+			m.SNI = string(payload[extensionOffset : extensionOffset+nameLength])
 			return nil
 		}
 		extensionOffset += extensionLen

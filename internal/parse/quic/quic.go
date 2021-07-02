@@ -8,7 +8,7 @@ import (
 
 type Quic struct {
 	Header *ExtendedHeader
-	Hello  tls.QuickHelloMsg
+	Hello  tls.ClientHello
 }
 
 func (p *Quic) Unmarshal(payload []byte) error {
@@ -33,6 +33,5 @@ func (p *Quic) Unmarshal(payload []byte) error {
 		return err
 	}
 
-	frameHeaderSize := 4
-	return p.Hello.Unmarshal(decryptedData[frameHeaderSize:])
+	return p.Hello.Unmarshal(decryptedData)
 }

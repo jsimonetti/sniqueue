@@ -45,7 +45,7 @@ func (p *TCP) unmarshal(payload []byte) error {
 
 	// Only handle TLS
 	if payload[cursor] == 0x16 {
-		return p.Hello.Unmarshal(payload[cursor:])
+		return p.Hello.Unmarshal(payload[cursor+1:])
 	}
 	return tls.UnmarshalNoTLSError
 }

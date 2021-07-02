@@ -20,9 +20,11 @@ in pkgs.nixosTest ({
         prefixLength = 24;
       }];
       services.nginx.enable = true;
+      services.nginx.package = pkgs.nginxQuic;
       services.nginx.virtualHosts."dns.google" = {
         addSSL = true;
         default = true;
+        http3 = true;
         sslCertificate = ./nginx-selfsigned.crt;
         sslCertificateKey = ./nginx-selfsigned.key;
       };
