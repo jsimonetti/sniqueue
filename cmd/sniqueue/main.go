@@ -9,10 +9,9 @@ import (
 	"os/signal"
 	"time"
 
-	quic "github.com/jsimonetti/sniqueue/internal/parse/tls"
-
 	"github.com/jsimonetti/sniqueue/internal/parse"
 	"github.com/jsimonetti/sniqueue/internal/tree"
+	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 
 	"github.com/florianl/go-nfqueue"
 )
@@ -115,7 +114,7 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	if err != nil {
 		if debug {
 			logger.Printf("Parse error: %s", err)
-			if err != quic.UnmarshalNoTLSError && err != quic.UnmarshalNoTLSHandshakeError {
+			if err != tls.UnmarshalNoTLSError && err != tls.UnmarshalNoTLSHandshakeError {
 				logger.Printf("Packet payload: %#v", payload)
 			}
 		}

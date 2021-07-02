@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"errors"
+	"io"
+
 	"github.com/marten-seemann/qtls-go1-16"
 	"golang.org/x/crypto/hkdf"
-	"io"
 )
 
 var UnmarshalQUICError = errors.New("insufficient bytes to unmarshal QUIC")

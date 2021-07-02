@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/jsimonetti/sniqueue/internal/parse/quic"
-
 	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 )
 

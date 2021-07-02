@@ -3,8 +3,9 @@ package parse
 import (
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/jsimonetti/sniqueue/internal/parse/tls"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestUDP_unmarshal(t *testing.T) {
