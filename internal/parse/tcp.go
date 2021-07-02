@@ -3,14 +3,16 @@ package parse
 import (
 	"encoding/binary"
 	"errors"
+
+	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 )
 
-var unmarshalTCPError = errors.New("insufficient bytes to unmarshal TCP")
+var unmarshalTCPError = errors.New("insufficient bytes to Unmarshal TCP")
 
 type TCP struct {
 	SourcePort      uint16
 	DestinationPort uint16
-	Hello           clientHello
+	Hello           tls.ClientHello
 }
 
 func (p *TCP) domainName() string {
@@ -34,7 +36,7 @@ func (p *TCP) unmarshal(payload []byte) error {
 
 	cursor := int(dataOffset) * 4
 	if cursor == len(payload) { // no data in packet
-		return UnmarshalNoTLSError
+		return tls.UnmarshalNoTLSError
 	}
 	if cursor > len(payload) {
 		// TCP data offset greater than packet length
@@ -43,7 +45,7 @@ func (p *TCP) unmarshal(payload []byte) error {
 
 	// Only handle TLS
 	if payload[cursor] == 0x16 {
-		return p.Hello.unmarshal(payload[cursor:])
+		return p.Hello.Unmarshal(payload[cursor:])
 	}
-	return UnmarshalNoTLSError
+	return tls.UnmarshalNoTLSError
 }

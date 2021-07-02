@@ -1,28 +1,28 @@
-package parse
+package quic
 
 import (
 	"bytes"
 
-	"github.com/jsimonetti/sniqueue/internal/parse/quic"
+	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 )
 
 type Quic struct {
-	Header *quic.ExtendedHeader
-	Hello  quickHelloMsg
+	Header *ExtendedHeader
+	Hello  tls.QuickHelloMsg
 }
 
-func (p *Quic) unmarshal(payload []byte) error {
-	hdr, err := quic.ParseHeader(bytes.NewReader(payload))
+func (p *Quic) Unmarshal(payload []byte) error {
+	hdr, err := ParseHeader(bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
 	if int64(len(payload)) < hdr.ParsedLen+hdr.Length {
-		return quic.UnmarshalQUICError
+		return UnmarshalQUICError
 	}
 
-	opener := quic.NewInitialAEAD(hdr.DestConnectionID, hdr.Version)
+	opener := NewInitialAEAD(hdr.DestConnectionID, hdr.Version)
 	encryptedData := payload[:hdr.ParsedLen+hdr.Length]
-	p.Header, err = quic.UnpackHeader(opener, hdr, encryptedData, hdr.Version)
+	p.Header, err = UnpackHeader(opener, hdr, encryptedData, hdr.Version)
 	if err != nil {
 		return err
 	}
@@ -34,5 +34,5 @@ func (p *Quic) unmarshal(payload []byte) error {
 	}
 
 	frameHeaderSize := 4
-	return p.Hello.unmarshal(decryptedData[frameHeaderSize:])
+	return p.Hello.Unmarshal(decryptedData[frameHeaderSize:])
 }

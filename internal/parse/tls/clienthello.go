@@ -1,21 +1,16 @@
-package parse
+package tls
 
 import (
 	"encoding/binary"
-	"errors"
 )
 
-var unmarshalClientHelloError = errors.New("insufficient bytes to unmarshal clienthello")
-var UnmarshalNoTLSHandshakeError = errors.New("TLS handshake not found")
-var UnmarshalNoTLSError = errors.New("not a TLS packet")
-
-type clientHello struct {
+type ClientHello struct {
 	SNI string
 }
 
-func (c *clientHello) unmarshal(payload []byte) error {
+func (c *ClientHello) Unmarshal(payload []byte) error {
 	if len(payload) < 5 {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 	handshakeProtocol := payload[5]
 
@@ -33,13 +28,13 @@ func (c *clientHello) unmarshal(payload []byte) error {
 
 	offset, baseOffset, extensionOffset := uint16(0), uint16(43), uint16(2)
 	if baseOffset+2 > uint16(len(payload)) {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the session ID
 	sessionIdLength := uint16(payload[baseOffset])
 	if (sessionIdLength + baseOffset + 2) > handshakeLength {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the ciphers
@@ -47,14 +42,14 @@ func (c *clientHello) unmarshal(payload []byte) error {
 	cipherLen := binary.BigEndian.Uint16(payload[cipherLenStart : cipherLenStart+2])
 	offset = baseOffset + sessionIdLength + cipherLen + 2
 	if offset > handshakeLength {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the compression methods list
 	compressionLen := uint16(payload[offset+1])
 	offset += compressionLen + 2
 	if offset > handshakeLength {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the extensions
@@ -64,7 +59,7 @@ func (c *clientHello) unmarshal(payload []byte) error {
 	extensionOffset += offset
 
 	if extensionsLen > handshakeLength {
-		return unmarshalClientHelloError
+		return UnmarshalClientHelloError
 	}
 
 	for extensionOffset < extensionsLen+offset {

@@ -1,4 +1,4 @@
-package parse
+package tls
 
 import (
 	"strings"
@@ -6,11 +6,11 @@ import (
 	"golang.org/x/crypto/cryptobyte"
 )
 
-type quickHelloMsg struct {
+type QuickHelloMsg struct {
 	SNI string
 }
 
-func (m *quickHelloMsg) unmarshal(data []byte) error {
+func (m *QuickHelloMsg) Unmarshal(data []byte) error {
 	s := cryptobyte.String(data)
 	var u16 uint16
 	var u8 []byte

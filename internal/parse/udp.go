@@ -3,14 +3,18 @@ package parse
 import (
 	"encoding/binary"
 	"errors"
+
+	"github.com/jsimonetti/sniqueue/internal/parse/quic"
+
+	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 )
 
-var unmarshalUDPError = errors.New("insufficient bytes to unmarshal UDP")
+var unmarshalUDPError = errors.New("insufficient bytes to Unmarshal UDP")
 
 type UDP struct {
 	SourcePort      uint16
 	DestinationPort uint16
-	Hello           clientHello
+	Hello           tls.ClientHello
 }
 
 func (p *UDP) domainName() string {
@@ -32,8 +36,8 @@ func (p *UDP) unmarshal(payload []byte) error {
 		return unmarshalUDPError
 	}
 
-	quick := &Quic{}
-	if err := quick.unmarshal(payload[8:]); err != nil {
+	quick := &quic.Quic{}
+	if err := quick.Unmarshal(payload[8:]); err != nil {
 		return err
 	}
 	p.Hello.SNI = quick.Hello.SNI

@@ -1,4 +1,4 @@
-package parse
+package tls
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ func Test_quickHelloMsg_unmarshal(t *testing.T) {
 	tests := []struct {
 		name    string
 		payload []byte
-		want    *quickHelloMsg
+		want    *QuickHelloMsg
 		wantErr bool
 	}{
 		// TODO: Add test cases.
@@ -21,13 +21,13 @@ func Test_quickHelloMsg_unmarshal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := &quickHelloMsg{}
+			got := &QuickHelloMsg{}
 
-			if err := got.unmarshal(tt.payload); err != nil {
+			if err := got.Unmarshal(tt.payload); err != nil {
 				if tt.wantErr {
 					return
 				}
-				t.Fatalf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return

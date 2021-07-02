@@ -6,9 +6,9 @@ import (
 	"net"
 )
 
-var unmarshalIPError = errors.New("insufficient bytes to unmarshal IP")
-var unmarshalIP4Error = errors.New("insufficient bytes to unmarshal IP4")
-var unmarshalIP6Error = errors.New("insufficient bytes to unmarshal IP6")
+var unmarshalIPError = errors.New("insufficient bytes to Unmarshal IP")
+var unmarshalIP4Error = errors.New("insufficient bytes to Unmarshal IP4")
+var unmarshalIP6Error = errors.New("insufficient bytes to Unmarshal IP6")
 var unmarshalNonIPError = errors.New("cannot parse non-IP")
 
 type IPv4 struct {
