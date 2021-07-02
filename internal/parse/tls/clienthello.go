@@ -26,16 +26,16 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	}
 
 	// Get the length of the session ID
-	sessionIdLength := uint16(payload[baseOffset])
-	if (sessionIdLength + baseOffset + 2) > payloadLength {
+	sessionIDLength := uint16(payload[baseOffset])
+	if (sessionIDLength + baseOffset + 2) > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the ciphers
-	cipherLenStart := baseOffset + sessionIdLength + 1
+	cipherLenStart := baseOffset + sessionIDLength + 1
 	cipherLen := binary.BigEndian.Uint16(payload[cipherLenStart : cipherLenStart+2])
 
-	offset = baseOffset + sessionIdLength + cipherLen + 2
+	offset = baseOffset + sessionIDLength + cipherLen + 2
 	if offset > payloadLength {
 		return UnmarshalClientHelloError
 	}
@@ -58,13 +58,13 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	}
 
 	for extensionOffset < extensionsLen+offset {
-		extensionId := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
+		extensionID := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
 		extensionOffset += 2
 
 		extensionLen := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
 		extensionOffset += 2
 
-		if extensionId == 0 {
+		if extensionID == 0 {
 			// We don't need the server name list length or name_type, so skip that
 			extensionOffset += 3
 
