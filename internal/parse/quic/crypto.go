@@ -8,7 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/marten-seemann/qtls-go1-16"
+	"github.com/jsimonetti/sniqueue/internal/qtls"
 	"golang.org/x/crypto/hkdf"
 )
 
