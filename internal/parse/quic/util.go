@@ -7,7 +7,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/marten-seemann/qtls-go1-16"
+	"github.com/jsimonetti/sniqueue/internal/qtls"
 	"golang.org/x/crypto/hkdf"
 )
 
