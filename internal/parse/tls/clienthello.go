@@ -9,7 +9,6 @@ type ClientHello struct {
 }
 
 func (m *ClientHello) Unmarshal(payload []byte) error {
-
 	payloadLength := uint16(len(payload))
 	if payloadLength < uint16(4) {
 		return UnmarshalClientHelloError
@@ -34,7 +33,7 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 
 	// Get the length of the ciphers
 	cipherLenStart := baseOffset + sessionIdLength + 1
-	cipherLen := uint16(payload[cipherLenStart])<<8 | uint16(payload[cipherLenStart+1])
+	cipherLen := binary.BigEndian.Uint16(payload[cipherLenStart : cipherLenStart+2])
 
 	offset = baseOffset + sessionIdLength + cipherLen + 2
 	if offset > payloadLength {
