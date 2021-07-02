@@ -21,7 +21,7 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	}
 
 	offset, baseOffset, extensionOffset := uint16(0), uint16(42), uint16(2)
-	if baseOffset+2 > uint16(len(payload)) {
+	if baseOffset+2 > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
