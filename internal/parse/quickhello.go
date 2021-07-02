@@ -45,8 +45,8 @@ func (m *quickHelloMsg) unmarshal(data []byte) error {
 	//if !s.ReadUint16LengthPrefixed(&extensions) || !s.Empty() {
 	//	return errors.New("hier")
 	//}
-
 	s.ReadUint16LengthPrefixed(&extensions)
+
 	for !extensions.Empty() {
 		var ext uint16
 		var extData cryptobyte.String
