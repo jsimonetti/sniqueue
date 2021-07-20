@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/jsimonetti/sniqueue/internal/pcap"
+
 	"github.com/jsimonetti/sniqueue/internal/parse"
 	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 	"github.com/jsimonetti/sniqueue/internal/tree"
@@ -21,6 +23,7 @@ var markBadNumber int
 var markGoodNumber int
 var dropPackets bool
 var debug bool
+var debugwrite bool
 var loadList listFlags
 
 func init() {
@@ -28,11 +31,15 @@ func init() {
 	flag.IntVar(&markBadNumber, "mark", 1, "mark matched packets")
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets (has precedence over mark)")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
+	flag.BoolVar(&debugwrite, "debugwrite", false, "write unknown packets to pcap file")
 	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
 }
 
 var list tree.Tree
 var logger *log.Logger
+
+var pcapV4 *pcap.Writer
+var pcapV6 *pcap.Writer
 
 func main() {
 	flag.Parse()
@@ -41,6 +48,20 @@ func main() {
 	logger = log.Default()
 	if debug {
 		logger.SetPrefix("[DEBUG] ")
+		v4, err := os.Create("/tmp/sniqueue.ipv4.pcap")
+		if err != nil {
+			logger.Fatalln(err)
+		}
+		defer v4.Close()
+		v6, err := os.Create("/tmp/sniqueue.ipv6.pcap")
+		if err != nil {
+			logger.Fatalln(err)
+		}
+		defer v6.Close()
+		pcapV4 = pcap.NewWriter(v4)
+		pcapV4.WriteFileHeader(pcap.LinkTypeIPv4)
+		pcapV6 = pcap.NewWriter(v6)
+		pcapV6.WriteFileHeader(pcap.LinkTypeIPv6)
 	}
 
 	verdict := "drop"
@@ -115,7 +136,16 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 		if debug {
 			logger.Printf("Parse error: %s", err)
 			if err != tls.UnmarshalNoTLSError && err != tls.UnmarshalNoTLSHandshakeError {
-				logger.Printf("Packet payload: %#v", payload)
+				if debugwrite {
+					if pkt.Version() == 4 {
+						pcapV4.WritePacket(payload)
+					} else if pkt.Version() == 6 {
+						pcapV6.WritePacket(payload)
+					}
+				}
+				if !debugwrite {
+					logger.Printf("Packet payload: %#v", payload)
+				}
 			}
 		}
 		_ = queue.SetVerdict(id, nfqueue.NfAccept)
