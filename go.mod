@@ -7,6 +7,7 @@ require (
 	github.com/florianl/go-nfqueue v1.2.0
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/go-cmp v0.5.6
+	github.com/google/gopacket v1.1.19 // indirect
 	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.3
 	github.com/marten-seemann/qtls-go1-17 v0.1.0-beta.1.2 // indirect

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/jsimonetti/sniqueue/internal/parse"
-	"github.com/jsimonetti/sniqueue/internal/tree"
 	"github.com/jsimonetti/sniqueue/internal/parse/tls"
+	"github.com/jsimonetti/sniqueue/internal/tree"
 
 	"github.com/florianl/go-nfqueue"
 )
