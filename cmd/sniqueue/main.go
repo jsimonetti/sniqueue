@@ -45,7 +45,10 @@ func main() {
 	flag.Parse()
 	markGoodNumber = markBadNumber + 1
 
-	logger = log.Default()
+	// Assume we are running under systemd or similar and don't print time/date
+	// in the logs.
+	logger = log.New(os.Stderr, "", 0)
+
 	if debug {
 		logger.SetPrefix("[DEBUG] ")
 		v4, err := os.Create("/tmp/sniqueue.ipv4.pcap")
