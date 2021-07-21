@@ -39,7 +39,7 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 					}
 					tagNum--
 				}
-				return nil
+				return UnmarshalNoTLSHandshakeError
 			}
 		}
 		return UnmarshalNoTLSHandshakeError
