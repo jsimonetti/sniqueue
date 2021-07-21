@@ -23,6 +23,7 @@ var markBadNumber int
 var markGoodNumber int
 var dropPackets bool
 var debug bool
+var blog bool
 var debugwrite bool
 var loadList listFlags
 
@@ -32,6 +33,7 @@ func init() {
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets (has precedence over mark)")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
 	flag.BoolVar(&debugwrite, "debugwrite", false, "write unknown packets to pcap file")
+	flag.BoolVar(&blog, "log", false, "log all SNI actions")
 	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
 }
 
@@ -157,21 +159,21 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
-			if debug {
+			if debug || blog {
 				logger.Printf("Dropped packet (sni: '%s')", pkt.DomainName())
 			}
 			_ = queue.SetVerdict(id, nfqueue.NfDrop)
 			return
 		}
 
-		if debug {
+		if debug || blog {
 			logger.Printf("Marked packet with %d (sni: '%s')", markBadNumber, pkt.DomainName())
 		}
 		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markBadNumber)
 		return
 	}
 
-	if debug {
+	if debug || blog {
 		logger.Printf("Accepted packet (sni: '%s')", pkt.DomainName())
 	}
 	if dropPackets {
