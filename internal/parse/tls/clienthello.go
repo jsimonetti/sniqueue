@@ -2,6 +2,7 @@ package tls
 
 import (
 	"encoding/binary"
+	"fmt"
 )
 
 type ClientHello struct {
@@ -17,6 +18,32 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	handshakeProtocol := payload[4]
 	// Only attempt to match on client hellos
 	if handshakeProtocol != 0x01 {
+		// test for GQUIC
+		if payloadLength >= 16 {
+			if payload[4] == 0x43 && payload[5] == 0x48 && payload[6] == 0x4c && payload[7] == 0x4f { // GQUIC's CHLO
+				//tagNum := binary.BigEndian.Uint16(payload[8:10]) // total number of variable length tags
+				tagNum := uint16(payload[8]) + uint16(payload[9])<<8
+				tagOffset := 12 // start of the first tag
+				payloadLength := int(payloadLength)
+
+				for tagNum > 0 && payloadLength >= tagOffset+8 {
+					tagType := binary.LittleEndian.Uint32(payload[tagOffset : tagOffset+4])
+					if tagType == 4804179 {
+						tagLen := binary.LittleEndian.Uint32(payload[tagOffset+4 : tagOffset+8])
+						fmt.Printf("len: %d\n", tagLen)
+						tagStart := tagOffset + int(tagNum)*8
+						tagEnd := tagStart + int(tagLen)
+						if payloadLength > tagOffset+int(tagNum)*8+tagEnd {
+							m.SNI = string(payload[tagStart:tagEnd])
+							return nil
+						}
+						tagOffset = tagOffset + 8
+					}
+					tagNum--
+				}
+				return nil
+			}
+		}
 		return UnmarshalNoTLSHandshakeError
 	}
 

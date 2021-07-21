@@ -40,7 +40,7 @@ func (h *ExtendedHeader) parseLongHeader(b *bytes.Reader, _ uint32) (bool /* res
 	if err := h.readPacketNumber(b); err != nil {
 		return false, err
 	}
-	if h.TypeByte&0xc != 0 {
+	if h.TypeByte&0xc != 0 && h.TypeByte&0x1 != 0 {
 		return false, nil
 	}
 	return true, nil

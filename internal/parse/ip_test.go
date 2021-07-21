@@ -278,7 +278,7 @@ func Test_parse(t *testing.T) {
 			wantErr: true, // to skip quic for now
 		},
 		{
-			name: "IPv4 SYN",
+			name:    "IPv4 SYN",
 			wantErr: true,
 			payload: []byte{
 				0x45, 0x00, 0x00, 0x3c, 0x14, 0xd6, 0x40, 0x00,
@@ -294,7 +294,7 @@ func Test_parse(t *testing.T) {
 			},
 		},
 		{
-			name: "IPv4 SYN/ACK",
+			name:    "IPv4 SYN/ACK",
 			wantErr: true,
 			payload: []byte{
 				0x45, 0x00, 0x00, 0x34, 0x14, 0xd7, 0x40, 0x00,
@@ -308,7 +308,7 @@ func Test_parse(t *testing.T) {
 			},
 		},
 		{
-			name: "IPv4 FYN",
+			name: "IPv4 FIN",
 			payload: []byte{
 				0x45, 0x00, 0x00, 0x34, 0x14, 0xe5, 0x40, 0x00,
 				0x3f, 0x06, 0x53, 0x21, 0x0a, 0x0a, 0x01, 0x0a,
