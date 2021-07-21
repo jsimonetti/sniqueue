@@ -86,7 +86,7 @@ func (h *Header) parseLongHeader(b *bytes.Reader) (err error) {
 
 	// If we don't understand the version, we have no idea how to interpret the rest of the bytes
 	if !IsSupportedVersion(SupportedVersions, h.Version) {
-		return UnmarshalNoQUICError
+		return UnmarshalQUICUnsupportedVersion
 	}
 	if (h.TypeByte&0x30)>>4 != 0x0 {
 		// not an initial package

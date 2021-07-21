@@ -16,6 +16,7 @@ var unmarshalQUICDecryptError = errors.New("cannot decrypt QUIC payload")
 var UnmarshalNoQUICError = errors.New("not a QUIC packet")
 var UnmarshalNoQUICInitialError = errors.New("not an initial QUIC packet")
 var UnmarshalQUICBitsError = errors.New("unknown bits in QUIC header")
+var UnmarshalQUICUnsupportedVersion = errors.New("unsupported QUIC version")
 
 var initialSuite = &qtls.CipherSuiteTLS13{
 	ID:     tls.TLS_AES_128_GCM_SHA256,

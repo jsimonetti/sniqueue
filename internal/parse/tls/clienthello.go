@@ -2,7 +2,6 @@ package tls
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 type ClientHello struct {
@@ -30,7 +29,6 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 					tagType := binary.LittleEndian.Uint32(payload[tagOffset : tagOffset+4])
 					if tagType == 4804179 {
 						tagLen := binary.LittleEndian.Uint32(payload[tagOffset+4 : tagOffset+8])
-						fmt.Printf("len: %d\n", tagLen)
 						tagStart := tagOffset + int(tagNum)*8
 						tagEnd := tagStart + int(tagLen)
 						if payloadLength > tagOffset+int(tagNum)*8+tagEnd {
