@@ -46,6 +46,9 @@ type transportLayer interface {
 }
 
 func (p *IPv4) unmarshal(payload []byte) error {
+	if len(payload) < 20 {
+		return unmarshalIP4Error
+	}
 	p.Source = payload[12:16]
 	p.Destination = payload[16:20]
 	p.Protocol = int(payload[9])
@@ -65,8 +68,11 @@ func (p *IPv4) unmarshal(payload []byte) error {
 	} else if p.IPHeaderLength < 5 {
 		// Invalid (too small) IP header length
 		return unmarshalIP4Error
-	} else if int(p.IPHeaderLength*4) > int(p.Length) {
+	} else if p.IPHeaderLength*4 > int(p.Length) {
 		// Invalid IP header length > IP length
+		return unmarshalIP4Error
+	} else if p.IPHeaderLength*4 > len(payload) {
+		// not a complete packet
 		return unmarshalIP4Error
 	}
 
@@ -90,7 +96,6 @@ func (p *IPv6) unmarshal(payload []byte) error {
 	p.Protocol = int(payload[6])
 	p.Length = binary.BigEndian.Uint16(payload[4:6])
 
-	var t transportLayer
 	switch p.Protocol {
 	case 6:
 		p.Transport = &TCP{}
@@ -100,7 +105,7 @@ func (p *IPv6) unmarshal(payload []byte) error {
 		return p.Transport.unmarshal(payload[40:])
 	}
 
-	return t.unmarshal(payload[40:])
+	return unmarshalIP6Error
 }
 
 type networkLayer interface {

@@ -10,7 +10,7 @@ type ClientHello struct {
 
 func (m *ClientHello) Unmarshal(payload []byte) error {
 	payloadLength := uint16(len(payload))
-	if payloadLength < uint16(4) {
+	if payloadLength < uint16(5) {
 		return UnmarshalClientHelloError
 	}
 
@@ -52,7 +52,7 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 
 	// Get the length of the session ID
 	sessionIDLength := uint16(payload[baseOffset])
-	if (sessionIDLength + baseOffset + 2) > payloadLength {
+	if (sessionIDLength + baseOffset + 3) > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
@@ -61,14 +61,14 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	cipherLen := binary.BigEndian.Uint16(payload[cipherLenStart : cipherLenStart+2])
 
 	offset = baseOffset + sessionIDLength + cipherLen + 2
-	if offset > payloadLength {
+	if offset+2 > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
 	// Get the length of the compression methods list
 	compressionLen := uint16(payload[offset+1])
 	offset += compressionLen + 2
-	if offset > payloadLength {
+	if offset+2 > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
@@ -78,11 +78,11 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 	// Add the full offset to were the extensions start
 	extensionOffset += offset
 
-	if extensionsLen > payloadLength {
+	if extensionOffset+2 > payloadLength {
 		return UnmarshalClientHelloError
 	}
 
-	for extensionOffset < extensionsLen+offset {
+	for extensionOffset < extensionsLen+offset && extensionOffset+13 <= payloadLength {
 		extensionID := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
 		extensionOffset += 2
 
@@ -97,6 +97,9 @@ func (m *ClientHello) Unmarshal(payload []byte) error {
 			nameLength := binary.BigEndian.Uint16(payload[extensionOffset : extensionOffset+2])
 			extensionOffset += 2
 
+			if extensionOffset+nameLength > payloadLength || extensionOffset+nameLength < extensionOffset {
+				return UnmarshalClientHelloError
+			}
 			m.SNI = string(payload[extensionOffset : extensionOffset+nameLength])
 			return nil
 		}

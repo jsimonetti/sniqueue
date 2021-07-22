@@ -2,6 +2,8 @@ github.com/Lochnair/go-patricia v2.3.3+incompatible h1:9O8xpwh39gpDb8NaOsznx2VdJ
 github.com/Lochnair/go-patricia v2.3.3+incompatible/go.mod h1:4smCwhlAYFuBu0hWsZOF4+0tdvay2zflyV+hoR0XNGQ=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/dvyukov/go-fuzz v0.0.0-20210602112143-b1f3d6f4ef4e h1:qTP1telKJHlToHlwPQNmVg4yfMDMHe4Z3SYmzkrvA2M=
+github.com/dvyukov/go-fuzz v0.0.0-20210602112143-b1f3d6f4ef4e/go.mod h1:11Gm+ccJnvAhCNLlf5+cS9KjtbaD5I5zaZpFMsTHWTw=
 github.com/florianl/go-nfqueue v1.2.0 h1:UE1/7SZIjPwyTP6+cyX++KBMTj7MFYFn/q4D5cMs63U=
 github.com/florianl/go-nfqueue v1.2.0/go.mod h1:2z3Tfqwv2ueuK6h563xUHRcCh1mv38wS9EjiWiesk84=
 github.com/golang/mock v1.4.4/go.mod h1:l3mdAwkq5BuhzHwde/uurv3sEJeZMXNpwsxVWU71h+4=
