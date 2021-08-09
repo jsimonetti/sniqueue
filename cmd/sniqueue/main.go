@@ -53,20 +53,22 @@ func main() {
 
 	if debug {
 		logger.SetPrefix("[DEBUG] ")
-		v4, err := os.Create("/tmp/sniqueue.ipv4.pcap")
-		if err != nil {
-			logger.Fatalln(err)
+		if debugwrite {
+			v4, err := os.Create("/tmp/sniqueue.ipv4.pcap")
+			if err != nil {
+				logger.Fatalln(err)
+			}
+			defer v4.Close()
+			v6, err := os.Create("/tmp/sniqueue.ipv6.pcap")
+			if err != nil {
+				logger.Fatalln(err)
+			}
+			defer v6.Close()
+			pcapV4 = pcap.NewWriter(v4)
+			pcapV4.WriteFileHeader(pcap.LinkTypeIPv4)
+			pcapV6 = pcap.NewWriter(v6)
+			pcapV6.WriteFileHeader(pcap.LinkTypeIPv6)
 		}
-		defer v4.Close()
-		v6, err := os.Create("/tmp/sniqueue.ipv6.pcap")
-		if err != nil {
-			logger.Fatalln(err)
-		}
-		defer v6.Close()
-		pcapV4 = pcap.NewWriter(v4)
-		pcapV4.WriteFileHeader(pcap.LinkTypeIPv4)
-		pcapV6 = pcap.NewWriter(v6)
-		pcapV6.WriteFileHeader(pcap.LinkTypeIPv6)
 	}
 
 	verdict := "drop"
