@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"time"
@@ -23,15 +24,18 @@ var markBadNumber int
 var markGoodNumber int
 var dropPackets bool
 var debug bool
+var debugpeer string
 var blog bool
 var debugwrite bool
 var loadList listFlags
+var ipnet *net.IPNet
 
 func init() {
 	flag.IntVar(&queueNumber, "queue", 100, "queue number to listen on")
 	flag.IntVar(&markBadNumber, "mark", 1, "mark matched packets")
 	flag.BoolVar(&dropPackets, "drop", false, "drop matched packets (has precedence over mark)")
 	flag.BoolVar(&debug, "debug", false, "additional logging")
+	flag.StringVar(&debugpeer, "debugpeer", "0.0.0.0/0", "debug this peer only")
 	flag.BoolVar(&debugwrite, "debugwrite", false, "write unknown packets to pcap file")
 	flag.BoolVar(&blog, "log", false, "log all SNI actions")
 	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
@@ -50,6 +54,10 @@ func main() {
 	// Assume we are running under systemd or similar and don't print time/date
 	// in the logs.
 	logger = log.New(os.Stderr, "", 0)
+	var err error
+	if _, ipnet, err = net.ParseCIDR(debugpeer); err != nil {
+		logger.Fatalf("unable to parse debugpeer %s as CIDR", debugpeer)
+	}
 
 	if debug {
 		logger.SetPrefix("[DEBUG] ")
@@ -140,7 +148,7 @@ func main() {
 func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	pkt, err := parse.Parse(payload)
 	if err != nil {
-		if debug {
+		if debug && ipnet.Contains(pkt.Src()) {
 			logger.Printf("Parse error: %s", err)
 			if err != tls.UnmarshalNoTLSError && err != tls.UnmarshalNoTLSHandshakeError {
 				if debugwrite {
@@ -161,23 +169,25 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
-			if debug || blog {
+			if (debug || blog) && ipnet.Contains(pkt.Src()) {
 				logger.Printf("Dropped packet (sni: '%s')", pkt.DomainName())
 			}
 			_ = queue.SetVerdict(id, nfqueue.NfDrop)
 			return
 		}
 
-		if debug || blog {
+		if (debug || blog) && ipnet.Contains(pkt.Src()) {
 			logger.Printf("Marked packet with %d (sni: '%s')", markBadNumber, pkt.DomainName())
 		}
+
 		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markBadNumber)
 		return
 	}
 
-	if debug || blog {
+	if (debug || blog) && ipnet.Contains(pkt.Src()) {
 		logger.Printf("Accepted packet (sni: '%s')", pkt.DomainName())
 	}
+
 	if dropPackets {
 		_ = queue.SetVerdict(id, nfqueue.NfAccept)
 		return
