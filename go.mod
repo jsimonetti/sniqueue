@@ -6,7 +6,7 @@ require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
 	github.com/florianl/go-nfqueue v1.3.0
 	github.com/google/go-cmp v0.5.6
-	github.com/marten-seemann/qtls-go1-15 v0.1.4
+	github.com/marten-seemann/qtls-go1-15 v0.1.5
 	github.com/marten-seemann/qtls-go1-16 v0.1.3
 	github.com/marten-seemann/qtls-go1-17 v0.1.0
 	github.com/shomali11/util v0.0.0-20200329021417-91c54758c87b
