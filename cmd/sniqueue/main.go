@@ -110,7 +110,6 @@ func main() {
 		MaxPacketLen: 0xFFFF,
 		MaxQueueLen:  0xFF,
 		Copymode:     nfqueue.NfQnlCopyPacket,
-		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 15 * time.Millisecond,
 	}
 	if debug {
