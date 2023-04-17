@@ -9,7 +9,7 @@ require (
 	github.com/quic-go/qtls-go1-19 v0.3.2
 	github.com/quic-go/qtls-go1-20 v0.2.2
 	github.com/shomali11/util v0.0.0-20200329021417-91c54758c87b
-	golang.org/x/crypto v0.4.0
+	golang.org/x/crypto v0.8.0
 )
 
 require (
