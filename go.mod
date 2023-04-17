@@ -1,15 +1,15 @@
 module github.com/jsimonetti/sniqueue
 
-go 1.18
+go 1.19
 
 require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
 	github.com/florianl/go-nfqueue v1.3.1
 	github.com/google/go-cmp v0.5.9
-	github.com/marten-seemann/qtls-go1-18 v0.1.4
-	github.com/marten-seemann/qtls-go1-19 v0.1.2
+	github.com/quic-go/qtls-go1-19 v0.3.2
+	github.com/quic-go/qtls-go1-20 v0.2.2
 	github.com/shomali11/util v0.0.0-20200329021417-91c54758c87b
-	golang.org/x/crypto v0.8.0
+	golang.org/x/crypto v0.4.0
 )
 
 require (

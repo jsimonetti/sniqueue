@@ -3,12 +3,14 @@ package parse
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/jsimonetti/sniqueue/internal/parse/quic"
 	"github.com/jsimonetti/sniqueue/internal/parse/tls"
 )
 
 var unmarshalUDPError = errors.New("insufficient bytes to Unmarshal UDP")
+var errTruncatedPacket = errors.New("truncated packet")
 
 type UDP struct {
 	SourcePort      uint16
@@ -32,7 +34,7 @@ func (p *UDP) unmarshal(payload []byte) error {
 		return unmarshalUDPError
 	}
 	if length > len(payload) { // truncated/fragmented
-		return unmarshalUDPError
+		return fmt.Errorf("%s %d > %d", errTruncatedPacket, length, len(payload))
 	}
 
 	quick := &quic.Quic{}

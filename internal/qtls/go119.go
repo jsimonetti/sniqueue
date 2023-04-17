@@ -1,12 +1,12 @@
-//go:build go1.19
-// +build go1.19
+//go:build go1.19 && !go1.20
+// +build go1.19,!go1.20
 
 package qtls
 
 import (
 	"crypto/cipher"
 
-	"github.com/marten-seemann/qtls-go1-19"
+	"github.com/quic-go/qtls-go1-19"
 )
 
 type CipherSuiteTLS13 = qtls.CipherSuiteTLS13
