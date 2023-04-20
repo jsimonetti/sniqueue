@@ -26,6 +26,7 @@ var dropPackets bool
 var debug bool
 var debugpeer string
 var blog bool
+var blogBad bool
 var debugwrite bool
 var loadList listFlags
 var ipnet *net.IPNet
@@ -38,6 +39,7 @@ func init() {
 	flag.StringVar(&debugpeer, "debugpeer", "0.0.0.0/0", "debug this peer only")
 	flag.BoolVar(&debugwrite, "debugwrite", false, "write unknown packets to pcap file")
 	flag.BoolVar(&blog, "log", false, "log all SNI actions")
+	flag.BoolVar(&blogBad, "logbad", false, "log bad SNI domains")
 	flag.Var(&loadList, "list", "list of domains to load (use multiple times to load more files)")
 }
 
@@ -168,14 +170,14 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
-			if (debug || blog) && ipnet.Contains(pkt.Src()) {
+			if (debug || blog || blogBad) && ipnet.Contains(pkt.Src()) {
 				logger.Printf("Dropped packet (sni: '%s')", pkt.DomainName())
 			}
 			_ = queue.SetVerdict(id, nfqueue.NfDrop)
 			return
 		}
 
-		if (debug || blog) && ipnet.Contains(pkt.Src()) {
+		if (debug || blog || blogBad) && ipnet.Contains(pkt.Src()) {
 			logger.Printf("Marked packet with %d (sni: '%s')", markBadNumber, pkt.DomainName())
 		}
 
