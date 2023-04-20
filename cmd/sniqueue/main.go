@@ -171,14 +171,14 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	if list.Match(pkt.DomainName()) {
 		if dropPackets {
 			if (debug || blog || blogBad) && ipnet.Contains(pkt.Src()) {
-				logger.Printf("Dropped packet (sni: '%s')", pkt.DomainName())
+				logger.Printf("Dropped packet (sni: '%s') to '%s'", pkt.DomainName(), pkt.Dst())
 			}
 			_ = queue.SetVerdict(id, nfqueue.NfDrop)
 			return
 		}
 
 		if (debug || blog || blogBad) && ipnet.Contains(pkt.Src()) {
-			logger.Printf("Marked packet with %d (sni: '%s')", markBadNumber, pkt.DomainName())
+			logger.Printf("Marked packet with %d (sni: '%s') to '%s'", markBadNumber, pkt.DomainName(), pkt.Dst())
 		}
 
 		_ = queue.SetVerdictWithMark(id, nfqueue.NfAccept, markBadNumber)
@@ -186,7 +186,7 @@ func handle(queue *nfqueue.Nfqueue, payload []byte, id uint32) {
 	}
 
 	if (debug || blog) && ipnet.Contains(pkt.Src()) {
-		logger.Printf("Accepted packet (sni: '%s')", pkt.DomainName())
+		logger.Printf("Accepted packet (sni: '%s') to '%s'", pkt.DomainName(), pkt.Dst())
 	}
 
 	if dropPackets {

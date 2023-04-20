@@ -44,6 +44,10 @@ func (p *Inet) Src() net.IP {
 	return p.Source
 }
 
+func (p *Inet) Dst() net.IP {
+	return p.Destination
+}
+
 type transportLayer interface {
 	unmarshal([]byte) error
 	domainName() string
@@ -117,6 +121,7 @@ type networkLayer interface {
 	DomainName() string
 	Version() int
 	Src() net.IP
+	Dst() net.IP
 }
 
 func Parse(payload []byte) (networkLayer, error) {
