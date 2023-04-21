@@ -477,7 +477,22 @@ func TestQuic_unmarshal(t *testing.T) {
 				0xb2, 0x0f, 0x92, 0x20, 0xdf, 0xd8, 0xa9, 0x89, 0xff, 0xb8, 0x52, 0x05, 0x09, 0x2b, 0x45, 0xf5,
 				0x31, 0x98, 0xfc, 0x7e, 0x91, 0xab, 0xeb, 0x29, 0xf6, 0xac, 0xcd, 0x6b, 0x79, 0x06, 0x07, 0xd3,
 			},
-			wantErr: true,
+			want: &Quic{
+				Header: &ExtendedHeader{
+					Header: Header{
+						TypeByte:         195,
+						IsLongHeader:     true,
+						ParsedLen:        22,
+						Version:          4207849474,
+						DestConnectionID: []uint8{0x4a, 0xaf, 0x2d, 0x9e, 0xdd, 0xac, 0x80, 0x59},
+						Length:           1214,
+						Token:            []uint8{},
+					},
+					PacketNumberLen: 4,
+					PacketNumber:    9544607,
+				},
+				Hello: tls.ClientHello{SNI: "i.instagram.com"},
+			},
 		},
 	}
 	for _, tt := range tests {
