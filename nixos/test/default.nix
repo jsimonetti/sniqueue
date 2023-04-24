@@ -4,7 +4,8 @@ let
   router_wanip = "192.168.8.1";
   router_lanip = "10.10.1.1";
   client_ip = "10.10.1.10";
-in pkgs.nixosTest ({
+in
+pkgs.nixosTest ({
   system = "x86_64-linux";
   nodes = {
     router = {

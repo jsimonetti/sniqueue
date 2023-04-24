@@ -6,11 +6,12 @@ let
 
   sniqueue = ./sniqueue;
   list = ./mylist.sample;
-in { config, pkgs, ... }: {
+in
+{ config, pkgs, ... }: {
   boot.kernel.sysctl = { "net.ipv4.conf.all.forwarding" = true; };
 
   systemd.services.sniqueue = {
-    wantedBy = [ "multi-user.target" ]; 
+    wantedBy = [ "multi-user.target" ];
     after = [ "network.target" ];
     script = ''
       ${sniqueue} -queue 100 -mark 100 -debug -list ${list}
