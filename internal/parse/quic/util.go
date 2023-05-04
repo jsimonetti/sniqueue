@@ -61,16 +61,16 @@ var (
 )
 
 func getSalt(v uint32) []byte {
-	if v == VersionDraft34 || v == Version1 {
+	switch v {
+	case VersionDraft34:
 		return quicSaltDraft34
-	}
-	if v == VersionQ50 {
+	case Version1:
+		return quicSaltDraft34
+	case VersionQ50:
 		return quicSaltDraftQ50
-	}
-	if v == VersionDraft22 {
+	case VersionDraft22:
 		return quicSalt22
-	}
-	if v == VersionDraft27 {
+	case VersionDraft27:
 		return quicSalt23
 	}
 	return quicSaltOld
