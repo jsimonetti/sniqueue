@@ -11,7 +11,7 @@ buildGoModule rec {
 
   vendorSha256 = "sha256-ufbmWA9BWTa32h9s9veBOYTKSjICUmT0s5aWtIPopNs=";
 
-  subPackages = [ "./cmd/sniqueue" ];
+  subPackages = [ "cmd/sniqueue" ];
 
   meta = {
     description = "SNIQueue";
