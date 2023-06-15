@@ -13,7 +13,6 @@ const (
 	LinkTypeIPv6 uint32 = 229
 )
 
-
 // Writer wraps an underlying io.Writer to write packet data in PCAP
 // format.  See http://wiki.wireshark.org/Development/LibpcapFileFormat
 // for information on the file format.
@@ -21,7 +20,7 @@ const (
 // For those that care, we currently write v2.4 files with nanosecond
 // or microsecond timestamp resolution and little-endian encoding.
 type Writer struct {
-	w        io.Writer
+	w io.Writer
 	// Moving this into the struct seems to save an allocation for each call to writePacketHeader
 	buf [16]byte
 }
@@ -35,18 +34,18 @@ const versionMinor = 4
 // an append), you must call WriteFileHeader before WritePacket.
 // Packet timestamps are written witn microsecond precision.
 //
-//  // Write a new file:
-//  f, _ := os.Create("/tmp/file.pcap")
-//  w := pcapgo.NewWriter(f)
-//  w.WriteFileHeader(65536, layers.LinkTypeEthernet)  // new file, must do this.
-//  w.WritePacket(gopacket.CaptureInfo{...}, data1)
-//  f.Close()
-//  // Append to existing file (must have same snaplen and linktype)
-//  f2, _ := os.OpenFile("/tmp/file.pcap", os.O_APPEND, 0700)
-//  w2 := pcapgo.NewWriter(f2)
-//  // no need for file header, it's already written.
-//  w2.WritePacket(gopacket.CaptureInfo{...}, data2)
-//  f2.Close()
+//	// Write a new file:
+//	f, _ := os.Create("/tmp/file.pcap")
+//	w := pcapgo.NewWriter(f)
+//	w.WriteFileHeader(65536, layers.LinkTypeEthernet)  // new file, must do this.
+//	w.WritePacket(gopacket.CaptureInfo{...}, data1)
+//	f.Close()
+//	// Append to existing file (must have same snaplen and linktype)
+//	f2, _ := os.OpenFile("/tmp/file.pcap", os.O_APPEND, 0700)
+//	w2 := pcapgo.NewWriter(f2)
+//	// no need for file header, it's already written.
+//	w2.WritePacket(gopacket.CaptureInfo{...}, data2)
+//	f2.Close()
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{w: w}
 }
@@ -68,7 +67,7 @@ func (w *Writer) WriteFileHeader(linktype uint32) error {
 }
 
 func (w *Writer) writePacketHeader(len uint32) error {
-	t :=time.Now()
+	t := time.Now()
 	secs := t.Unix()
 	usecs := t.Nanosecond() / 1000
 	binary.LittleEndian.PutUint32(w.buf[0:4], uint32(secs))
