@@ -3,6 +3,7 @@
   inputs.nixpkgs.url = "nixpkgs/nixos-23.05";
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.treefmt-nix.url = "github:numtide/treefmt-nix";
+  inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = { self, nixpkgs, flake-utils, treefmt-nix }:
     flake-utils.lib.eachDefaultSystem (system: {
@@ -13,7 +14,7 @@
           programs.gofmt.enable = true;
         };
 
-      defaultPackage = self.packages.default;
+      defaultPackage = self.packages.${system}.default;
 
       packages = {
         default = self.packages.${system}.sniqueue;
