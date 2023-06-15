@@ -16,5 +16,5 @@ jobs:
         uses: cachix/install-nix-action@v21
 
       - name: Run nix formatter tool
-        run: nix fmt . -- --check
+        run: nix fmt . -- --fail-on-change
 
