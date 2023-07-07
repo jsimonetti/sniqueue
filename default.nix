@@ -9,7 +9,7 @@ buildGoModule rec {
   name = "sniqueue";
   inherit src;
 
-  vendorSha256 = "sha256-/T4Up5Ha8wlENgEYJURsoLCU7f6wMEKE8a0htMtvI3g=";
+  vendorSha256 = "sha256-nMnqSXgLJW+pAsV7E7njCqJfcyCaZoRpyXD5Wwck+WQ=";
 
   subPackages = [ "cmd/sniqueue" ];
 
