@@ -9,7 +9,7 @@ require (
 	github.com/quic-go/qtls-go1-19 v0.3.3
 	github.com/quic-go/qtls-go1-20 v0.2.3
 	github.com/shomali11/util v0.0.0-20200329021417-91c54758c87b
-	golang.org/x/crypto v0.13.0
+	golang.org/x/crypto v0.14.0
 )
 
 require (
@@ -20,5 +20,5 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 )
