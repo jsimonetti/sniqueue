@@ -12,7 +12,7 @@ buildGoModule rec {
 
   vendorSha256 = lib.fakeSha256
 
-  subPackages = [ "cmd/sniqueue" ];
+    subPackages = [ "cmd/sniqueue" ];
 
   meta = {
     description = "SNIQueue";
