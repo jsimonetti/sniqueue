@@ -47,15 +47,28 @@ jobs:
 
           exit $BUILD_STATUS
 
-      - name: Nix gosum diverging
-        uses: actions/github-script@v6
+#      - name: Nix gosum diverging
+#        uses: actions/github-script@v6
+#        if: failure() && steps.build.outcome == 'failure'
+#        with:
+#          github-token: ${{secrets.GITHUB_TOKEN}}
+#          script: |
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: 'Nix build failed with wrong gosum, please update "vendorSha256" (${{ steps.build.outputs.OLD_HASH }}) for the package in flake.nix with the new SHA: ${{ steps.build.outputs.NEW_HASH }}'
+#            })
+
+
+      - name: Update PR
         if: failure() && steps.build.outcome == 'failure'
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Nix build failed with wrong gosum, please update "vendorSha256" (${{ steps.build.outputs.OLD_HASH }}) for the package in flake.nix with the new SHA: ${{ steps.build.outputs.NEW_HASH }}'
-            })
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          sed -i s^${{ steps.build.outputs.OLD_HASH }}^${{ steps.build.outputs.NEW_HASH }}^g default.nix
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add default.nix
+          git commit -m "Update vendorSha256"
+          git push origin HEAD:${{ github.head_ref }}
