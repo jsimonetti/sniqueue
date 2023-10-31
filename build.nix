@@ -2,6 +2,7 @@
 , src ? ./.
 , buildGoModule
 , fetchFromGithub
+, lib
 ,
 }:
 
@@ -9,9 +10,9 @@ buildGoModule rec {
   name = "sniqueue";
   inherit src;
 
-  vendorSha256 = "sha256-H3kgu/Yu6zWx+KVhYEcEztlUPqjq36PqderJlzMMe8s=";
+  vendorSha256 = lib.fakeSha256
 
-  subPackages = [ "cmd/sniqueue" ];
+    subPackages = [ "cmd/sniqueue" ];
 
   meta = {
     description = "SNIQueue";
