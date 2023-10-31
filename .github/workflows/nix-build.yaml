@@ -62,6 +62,7 @@ jobs:
 
 
       - name: Update PR
+        id: update-pr
         if: failure() && steps.build.outcome == 'failure'
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -72,3 +73,20 @@ jobs:
           git add default.nix
           git commit -m "Update vendorSha256"
           git push origin HEAD:${{ github.head_ref }}
+
+
+      - name: Run build retry
+        id: build_retry
+        if: steps.update-pr.outcome == 'success'
+        run: |
+          nix build build.nix |& tee build-result
+          BUILD_STATUS="${PIPESTATUS[0]}"
+
+          OLD_HASH=$(cat build-result | grep specified: | awk -F ':' '{print $2}' | sed 's/ //g')
+          NEW_HASH=$(cat build-result | grep got: | awk -F ':' '{print $2}' | sed 's/ //g')
+
+          echo "OLD_HASH=$OLD_HASH" >> $GITHUB_OUTPUT
+          echo "NEW_HASH=$NEW_HASH" >> $GITHUB_OUTPUT
+
+          exit $BUILD_STATUS
+        continue-on-error: true
