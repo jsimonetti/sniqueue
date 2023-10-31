@@ -31,8 +31,6 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
         if: steps.changed-files.outputs.any_changed == 'true'
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-        if: steps.changed-files.outputs.any_changed == 'true'
 
       - name: Run build
         id: build
