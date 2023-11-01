@@ -39,7 +39,7 @@ jobs:
         id: build
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          nix build build.nix |& tee build-result
+          nix build |& tee build-result
           BUILD_STATUS="${PIPESTATUS[0]}"
 
           OLD_HASH=$(cat build-result | grep specified: | awk -F ':' '{print $2}' | sed 's/ //g')
@@ -67,4 +67,7 @@ jobs:
       - name: Run build retry
         id: build_retry
         if: failure() && steps.build.outcome == 'failure'
-        run: nix build build.nix
+        run: |
+          nix build |& tee build-result
+          BUILD_STATUS="${PIPESTATUS[0]}"
+          exit $BUILD_STATUS
