@@ -19,6 +19,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Get changed files
         id: changed-files
@@ -58,10 +61,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git add default.nix
           git commit -s -m "Update vendorSha256"
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:${{ github.head_ref }} 
 
 
       - name: Run build retry
         id: build_retry
-        if: steps.update-pr.outcome == 'success'
+        if: failure() && steps.build.outcome == 'failure'
         run: nix build build.nix
