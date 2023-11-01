@@ -2,7 +2,6 @@ package tree
 
 import (
 	"github.com/Lochnair/go-patricia/patricia"
-	"github.com/shomali11/util/xstrings"
 )
 
 type Tree struct {
@@ -23,7 +22,7 @@ func (t *Tree) Match(domainName string) bool {
 	if len(domainName) < 1 {
 		return false
 	}
-	reversedDomain := xstrings.Reverse(domainName)
+	reversedDomain := Reverse(domainName)
 	_, _, found, leftover := t.domainTrie.FindSubtree(patricia.Prefix(reversedDomain))
 
 	/*
@@ -35,7 +34,7 @@ func (t *Tree) Match(domainName string) bool {
 
 func (t *Tree) Append(list []string) *Tree {
 	for _, domain := range list {
-		reversedDomain := xstrings.Reverse(domain)
+		reversedDomain := Reverse(domain)
 		t.domainTrie.Insert(patricia.Prefix(reversedDomain), 0)
 		t.size++
 	}
