@@ -6,28 +6,32 @@
   inputs.treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = { self, nixpkgs, flake-utils, treefmt-nix }:
-    flake-utils.lib.eachDefaultSystem (system: {
-      formatter = treefmt-nix.lib.mkWrapper nixpkgs.legacyPackages.${system}
-        {
-          projectRootFile = "flake.nix";
-          programs.nixpkgs-fmt.enable = true;
-          programs.gofmt.enable = true;
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in
+      {
+        formatter = treefmt-nix.lib.mkWrapper pkgs
+          {
+            projectRootFile = "flake.nix";
+            programs.nixpkgs-fmt.enable = true;
+            programs.gofmt.enable = true;
+          };
+
+        defaultPackage = self.packages.${system}.default;
+
+        packages = {
+          default = self.packages.${system}.sniqueue;
+
+          sniqueue = pkgs.callPackage self {
+            src = self;
+          };
         };
 
-      defaultPackage = self.packages.${system}.default;
-
-      packages = {
-        default = self.packages.${system}.sniqueue;
-
-        sniqueue = nixpkgs.legacyPackages.${system}.callPackage self {
-          src = self;
+        devShells = {
+          default = pkgs.mkShell {
+            buildInputs = with pkgs; [ go gopls go-tools gotools jq yq ];
+          };
         };
-      };
-
-      devShells = {
-        default = nixpkgs.legacyPackages.${system}.mkShell {
-          buildInputs = with nixpkgs.legacyPackages.${system}; [ go gopls go-tools gotools jq yq ];
-        };
-      };
-    });
+      });
 }
