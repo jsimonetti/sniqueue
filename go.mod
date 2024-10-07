@@ -6,7 +6,7 @@ require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
 	github.com/florianl/go-nfqueue v1.3.2
 	github.com/google/go-cmp v0.6.0
-	golang.org/x/crypto v0.27.0
+	golang.org/x/crypto v0.28.0
 )
 
 require (
@@ -15,5 +15,5 @@ require (
 	github.com/mdlayher/socket v0.1.1 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 )
