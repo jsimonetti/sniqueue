@@ -1,14 +1,13 @@
 module github.com/jsimonetti/sniqueue
 
 go 1.21
-
 toolchain go1.23.5
 
 require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
 	github.com/florianl/go-nfqueue v1.3.2
 	github.com/google/go-cmp v0.7.0
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.34.0
 )
 
 require (
