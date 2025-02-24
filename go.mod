@@ -1,6 +1,8 @@
 module github.com/jsimonetti/sniqueue
 
-go 1.19
+go 1.21
+
+toolchain go1.23.5
 
 require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
