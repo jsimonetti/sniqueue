@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Lochnair/go-patricia v2.3.3+incompatible
 	github.com/florianl/go-nfqueue v1.3.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	golang.org/x/crypto v0.33.0
 )
 
